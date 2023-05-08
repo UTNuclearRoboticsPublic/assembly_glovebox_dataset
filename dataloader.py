@@ -12,15 +12,9 @@ transform = transforms.Compose ([
     transforms.ToTensor()
 ])
 
-transform2 = transforms.Compose ([
-    # transforms.Resize(size=(64, 64), interpolation=PIL.Image.NEAREST),
-    transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
-])
-
 class AssemblyDataset(Dataset):
-    def __init__(self, path_to_images, path_to_labels, transform):
+    def __init__(self, path_to_images, path_to_labels):
         self.transform = transform
-        self.transform2 = transform2
         self.path_to_images = path_to_images
         self.path_to_labels = path_to_labels
         self.images = os.listdir(path_to_images)
@@ -37,23 +31,21 @@ class AssemblyDataset(Dataset):
         print(img)
 
         image = Image.open(img)
+        image = image.convert("RGB")
+
         mask = Image.open(label)
+        print(np.array(mask).shape)
 
         img = self.transform(image)
         mask = self.transform(mask)
 
-
-        mask[np.where(mask<=0.5)] = 0
-        mask[np.where(mask>0.5)] = 1
-
-        print(f"unique values are {torch.unique(mask)}")
-
+        mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
 
         return img, mask
     
 # print(f"the imagees are {os.listdir('./masks')}")
 
-dataset = AssemblyDataset('./images', './masks', transform)
+dataset = AssemblyDataset('./images', './masks')
 
 dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
 
