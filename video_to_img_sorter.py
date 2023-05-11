@@ -38,7 +38,8 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
 
     for file in files:
         name = file
-        file = VideoFileClip(f"{os.getcwd()}" + head_dir + f"/{file}")
+
+        file = VideoFileClip(f"./Test_Subject_{subject_number}/{view}" + f"/{file}")
 
         starting_frame = 0
 
@@ -47,7 +48,10 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
         frame_numbers = np.linspace(0, num_frames, frames_to_sample).tolist()
         frame_numbers = [int(round(frame_num)) for frame_num in frame_numbers]
 
-        frame_times = frame_numbers * (1/file.fps)
+        frame_numbers = np.array(frame_numbers, dtype=float)
+        frame_times = frame_numbers * (1/file.fps) * (1/60)
+
+        print(f"the first time is {frame_times[0]} and last {frame_times[-1]}")
 
         frames = [file.get_frame(float(time)) for time in frame_times]
 
@@ -60,7 +64,12 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
             orig_idx = idx
 
             while True:
-                idx+=1
+                try:
+                    idx+=1
+                    frame_num = frame_numbers[idx]
+                except:
+                    idx -= idx
+                    break
                 save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
                 if os.path.isfile(save_path):
                     print("Same frame already exists!")
@@ -68,8 +77,11 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
                     break
             # change directories to include experiment
             # save the starting frame when changing later
+            # adjust the number of frames you get per video by calculating how many videos you have and how 
+            # many frames you need
 
             frame_num = frame_numbers[idx]
+
 
             os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
             image.save(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png")
