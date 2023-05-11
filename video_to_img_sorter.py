@@ -49,10 +49,8 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
 
         frame_numbers = np.linspace(0, num_frames, frames_to_sample).tolist()
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
-        print(f"the frame numbers are {frame_numbers}")
 
         frame_numbers = np.array(frame_numbers, dtype=float)
-        print(f"the frame numbers are {frame_numbers}")
         frame_times = frame_numbers * (1/file.fps)
         frame_times = np.floor(frame_times)
 
@@ -71,10 +69,12 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
                 print("Same frame already exists!")         
                 while True:
                     frame_num+=1
+                    save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
                     if os.path.isfile(save_path):
                         continue
                     else:
-                        frame_time = frame_num * (1/file.fps) * (1/60)
+                        frame_time = floor(frame_num * (1/file.fps))
+                        print("made it to the else statement")
                         frame = file.get_frame(float(frame_time))
                         break
             print(f"the frame is {frame_num}")
