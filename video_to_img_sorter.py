@@ -1,28 +1,24 @@
 import os
-import random
 from moviepy.editor import VideoFileClip
 from PIL import Image
 import numpy as np
 from math import floor
-
-# Option 1:
-# randomly samples a set of 110 frames from a participant's videos
-# TO DO: randomly take 10 to be used for the test set
-
-# randomly samples 10 frames to use as out of distribution (green screen and participant without gloves)
+from datetime import datetime
 
 def sorter(files):
+    """
+        Sorts the files into either in-distribution or out-of distribution list
+    """
+
     id = []
     ood = []
     for file in files:
-        # print(f"{file}")
         parse = file.split("_")[1]
         # if the file has gloves
         if parse.startswith("GL"):
             # if it is not a green screen video
             x = file.split("_")[-1]
             y = x.startswith("GL")
-            print(f"file is {file} and {x} is {y}")
             if (file.split("_")[-1]).startswith("GL"):
                 id.append(file)
             else:
@@ -34,20 +30,28 @@ def sorter(files):
             print(f"lonely {file}")
     return id, ood
 
-def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
+def choose_frames(files, view, dist_type, subject_number, frames_to_sample, initial_frame):
+    """
+        Collects an equally distributed sample of frames from the videos sent in 
+        and saves the unlabelled frames to its respective folder location.
+    """
+
     head_dir = f"/Test_Subject_{subject_number}/{view}"
+
+    def get_save_path(subject_number, dist_type, experiment_type, view, name, frame_num):
+        "Returns the path where the label will be saved"
+        save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
+        return save_path
 
     for file in files:
         name = file
 
         file = VideoFileClip(f"./Test_Subject_{subject_number}/{view}" + f"/{file}")
 
-        starting_frame = 0
-
         num_frames = int(file.fps * file.duration)
 
 
-        frame_numbers = np.linspace(0, num_frames, frames_to_sample).tolist()
+        frame_numbers = np.linspace(initial_frame, num_frames, frames_to_sample).tolist()
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
 
         frame_numbers = np.array(frame_numbers, dtype=float)
@@ -56,56 +60,70 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
 
         frames = []
         for time in frame_times:
-            print(f"the time is {time}")
             frames.append(file.get_frame((time)))
 
+        final_frame_nums = []
         for frame, frame_num in zip(frames, frame_numbers):
             name = name.split(".")[0]
             experiment_type = name.split("_")[0]
 
-            save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
+            save_path = get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num)
             
             if os.path.isfile(save_path):
-                print("Same frame already exists!")         
                 while True:
                     frame_num+=1
-                    save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
+                    save_path = get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num)
+
                     if os.path.isfile(save_path):
                         continue
                     else:
                         frame_time = floor(frame_num * (1/file.fps))
-                        print("made it to the else statement")
                         frame = file.get_frame(float(frame_time))
                         break
-            print(f"the frame is {frame_num}")
+            final_frame_nums.append(frame_num)
             image = Image.fromarray(frame)
-            # change directories to include experiment
             # save the starting frame when changing later
             # adjust the number of frames you get per video by calculating how many videos you have and how 
             # many frames you need
 
 
             os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
-            image.save(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png")
+            image.save(get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num))
+        
+        text_file_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/labelhistory.txt"
+
+        with open(text_file_path, "w") as file:
+            file.write('\n')
+            file.write(f"Time of file writes: {datetime.now()}")
+            file.write('\n')
+            file.write(f"Frame nums saved: {final_frame_nums}")
+
+
+        
                 
-def sampler(subject_number):
+def sampler(subject_number, initial_frame):
+    """
+        Takes files from a given test subject number and gathers a list
+        of equally distributed frames to save for future annotations. 
+
+        Initial frame is given to offset when gathering new sets of images to be used for annotations.
+    """
+
     top_files = os.listdir(f"./Test_Subject_{subject_number}/Top_View")
     side_files = os.listdir(f"./Test_Subject_{subject_number}/Side_View")
-
-    print(f"the top files are {top_files}")
-    print(f"the side files are {side_files}")
 
     id_top_files, ood_top_files = sorter(top_files)
 
     id_side_files, ood_side_files = sorter(side_files)
 
-    choose_frames(id_top_files, "Top_View", "id", subject_number, 55)
-    choose_frames(id_side_files, "Side_View", "id", subject_number, 55)
+    # Save the frames into the respective folders
+    choose_frames(id_top_files, view="Top_View", dist_type="id", subject_number=subject_number, frames_to_sample=55, initial_frame=initial_frame)
+    choose_frames(id_side_files, "Side_View", "id", subject_number, 55, initial_frame)
 
-    choose_frames(ood_top_files, "Top_View", "ood", subject_number, 5)
-    choose_frames(ood_side_files, "Side_View", "ood", subject_number, 5)
+    choose_frames(ood_top_files, "Top_View", "ood", subject_number, 5, initial_frame)
+    choose_frames(ood_side_files, "Side_View", "ood", subject_number, 5, initial_frame)
 
 
 if __name__=="__main__":
     # enter participant number to generate image directory with all values
-    sampler(subject_number = 1) 
+    sampler(subject_number = 1, initial_frame = 0) 
