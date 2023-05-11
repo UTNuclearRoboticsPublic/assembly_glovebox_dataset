@@ -16,14 +16,13 @@ def sorter(files):
         parse = file.split("_")[1]
         # if the file has gloves
         if parse.startswith("GL"):
-            # if it is not a green screen video
-            x = file.split("_")[-1]
-            y = x.startswith("GL")
+            # if it is not a green screen video, it is ID (because green screen is mentioned in the last part of the file naming convention)
             if (file.split("_")[-1]).startswith("GL"):
                 id.append(file)
+            # if it is a greed screen video, it is OOD
             else:
                 ood.append(file)
-                x = file.split("_")[-1]
+        # if there are no gloves in the video, it is OOD
         elif parse.startswith("NG"):
             ood.append(file)
         else:
@@ -51,17 +50,22 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
         num_frames = int(file.fps * file.duration)
 
 
+        # here we get an equal distribution of frames from the initial frame defined and the last frame of the video
         frame_numbers = np.linspace(initial_frame, num_frames, frames_to_sample).tolist()
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
 
+        # moviepy only takes time in seconds to return a frame, so we calculate the time(s) of the video 
+        # using the frame we want and the FPS of the video
         frame_numbers = np.array(frame_numbers, dtype=float)
         frame_times = frame_numbers * (1/file.fps)
+        # we have to floor each time otherwise the last frame runs us into problems
         frame_times = np.floor(frame_times)
 
         frames = []
         for time in frame_times:
             frames.append(file.get_frame((time)))
 
+        # going through each frame and saving it as an image
         final_frame_nums = []
         for frame, frame_num in zip(frames, frame_numbers):
             name = name.split(".")[0]
@@ -69,6 +73,8 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
 
             save_path = get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num)
             
+            # checking if a file with the same frame number already exists
+            # if it does, check if the next frame in the video also already exists
             if os.path.isfile(save_path):
                 while True:
                     frame_num+=1
@@ -82,19 +88,18 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
                         break
             final_frame_nums.append(frame_num)
             image = Image.fromarray(frame)
-            # save the starting frame when changing later
-            # adjust the number of frames you get per video by calculating how many videos you have and how 
-            # many frames you need
-
 
             os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
             image.save(get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num))
         
         text_file_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/labelhistory.txt"
 
+        # write to a text file about the images obtained from the videos in this code run if we want more for further use
         with open(text_file_path, "w") as file:
             file.write('\n')
             file.write(f"Time of file writes: {datetime.now()}")
+            file.write('\n')
+            file.write(f"Initial frame: {initial_frame}")
             file.write('\n')
             file.write(f"Frame nums saved: {final_frame_nums}")
 
