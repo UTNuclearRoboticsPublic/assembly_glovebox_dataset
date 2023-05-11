@@ -2,6 +2,7 @@ import os
 import random
 from moviepy.editor import VideoFileClip
 from PIL import Image
+import numpy as np
 
 # Option 1:
 # randomly samples a set of 110 frames from a participant's videos
@@ -34,21 +35,47 @@ def sorter(files):
 
 def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
     head_dir = f"/Test_Subject_{subject_number}/{view}"
+
     for file in files:
         name = file
         file = VideoFileClip(f"{os.getcwd()}" + head_dir + f"/{file}")
 
-        frame_times = sorted([float(random.uniform(0, file.duration)) for i in range(frames_to_sample)])
+        starting_frame = 0
+
+        num_frames = int(file.fps * file.duration)
+
+        frame_numbers = np.linspace(0, num_frames, frames_to_sample).tolist()
+        frame_numbers = [int(round(frame_num)) for frame_num in frame_numbers]
+
+        frame_times = frame_numbers * (1/file.fps)
 
         frames = [file.get_frame(float(time)) for time in frame_times]
+
         for idx, frame in enumerate(frames):
             name = name.split(".")[0]
+            experiment_type = name.split("_")[0]
+
             image = Image.fromarray(frame)
 
-            os.makedirs("./images" + f"/Test_Subject_{subject_number}/{view}/" + dist_type, exist_ok=True)
-            image.save("./images" + f"/Test_Subject_{subject_number}/{view}/" + dist_type + f"/{name}{idx}.png")
+            orig_idx = idx
 
-            
+            while True:
+                idx+=1
+                save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
+                if os.path.isfile(save_path):
+                    print("Same frame already exists!")
+                else:
+                    break
+            # change directories to include experiment
+            # save the starting frame when changing later
+
+            frame_num = frame_numbers[idx]
+
+            os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
+            image.save(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png")
+
+            idx = orig_idx
+                
 def sampler(subject_number):
     top_files = os.listdir(f"./Test_Subject_{subject_number}/Top_View")
     side_files = os.listdir(f"./Test_Subject_{subject_number}/Side_View")
@@ -60,7 +87,7 @@ def sampler(subject_number):
 
     id_side_files, ood_side_files = sorter(side_files)
 
-    choose_frames(id_top_files, "Top_View", "id",subject_number, 55)
+    choose_frames(id_top_files, "Top_View", "id", subject_number, 55)
     choose_frames(id_side_files, "Side_View", "id", subject_number, 55)
 
     choose_frames(ood_top_files, "Top_View", "ood", subject_number, 5)
@@ -69,8 +96,4 @@ def sampler(subject_number):
 
 if __name__=="__main__":
     # enter participant number to generate image directory with all values
-    sampler(1) 
-
-    
-
-
+    sampler(subject_number = 1) 
