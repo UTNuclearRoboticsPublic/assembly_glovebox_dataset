@@ -3,6 +3,7 @@ import random
 from moviepy.editor import VideoFileClip
 from PIL import Image
 import numpy as np
+from math import floor
 
 # Option 1:
 # randomly samples a set of 110 frames from a participant's videos
@@ -45,48 +46,47 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample):
 
         num_frames = int(file.fps * file.duration)
 
+
         frame_numbers = np.linspace(0, num_frames, frames_to_sample).tolist()
-        frame_numbers = [int(round(frame_num)) for frame_num in frame_numbers]
+        frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
+        print(f"the frame numbers are {frame_numbers}")
 
         frame_numbers = np.array(frame_numbers, dtype=float)
-        frame_times = frame_numbers * (1/file.fps) * (1/60)
+        print(f"the frame numbers are {frame_numbers}")
+        frame_times = frame_numbers * (1/file.fps)
+        frame_times = np.floor(frame_times)
 
-        print(f"the first time is {frame_times[0]} and last {frame_times[-1]}")
+        frames = []
+        for time in frame_times:
+            print(f"the time is {time}")
+            frames.append(file.get_frame((time)))
 
-        frames = [file.get_frame(float(time)) for time in frame_times]
-
-        for idx, frame in enumerate(frames):
+        for frame, frame_num in zip(frames, frame_numbers):
             name = name.split(".")[0]
             experiment_type = name.split("_")[0]
 
+            save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
+            
+            if os.path.isfile(save_path):
+                print("Same frame already exists!")         
+                while True:
+                    frame_num+=1
+                    if os.path.isfile(save_path):
+                        continue
+                    else:
+                        frame_time = frame_num * (1/file.fps) * (1/60)
+                        frame = file.get_frame(float(frame_time))
+                        break
+            print(f"the frame is {frame_num}")
             image = Image.fromarray(frame)
-
-            orig_idx = idx
-
-            while True:
-                try:
-                    idx+=1
-                    frame_num = frame_numbers[idx]
-                except:
-                    idx -= idx
-                    break
-                save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
-                if os.path.isfile(save_path):
-                    print("Same frame already exists!")
-                else:
-                    break
             # change directories to include experiment
             # save the starting frame when changing later
             # adjust the number of frames you get per video by calculating how many videos you have and how 
             # many frames you need
 
-            frame_num = frame_numbers[idx]
-
 
             os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
             image.save(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png")
-
-            idx = orig_idx
                 
 def sampler(subject_number):
     top_files = os.listdir(f"./Test_Subject_{subject_number}/Top_View")
