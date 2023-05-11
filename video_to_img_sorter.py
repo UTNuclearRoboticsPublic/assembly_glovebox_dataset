@@ -2,7 +2,7 @@ import os
 from moviepy.editor import VideoFileClip
 from PIL import Image
 import numpy as np
-from math import floor
+from math import floor, ceil
 from datetime import datetime
 
 def sorter(files):
@@ -42,16 +42,38 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
         save_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/{name}_{frame_num}.png"
         return save_path
 
-    for file in files:
+    for i, file in enumerate(files):
+
         name = file
 
         file = VideoFileClip(f"./Test_Subject_{subject_number}/{view}" + f"/{file}")
 
         num_frames = int(file.fps * file.duration)
 
+        num_samples = (frames_to_sample/len(files))
+
+        # if the num_samples calculated is not an integer, then
+        # we have to split it as evenly as we can. This means alternating 
+        # within 1 of the float value given by num_samples for each video in
+        # this series of files to ensure as little bias as possible
+        if not num_samples == int(num_samples):
+            notInt = True
+
+        # define how many images to sample in this video
+        if notInt:
+            if i%2==0:
+                num_samples = floor(frames_to_sample/len(files))
+            else:
+                num_samples = ceil(frames_to_sample/len(files))
+        else:
+            num_samples = (frames_to_sample/len(files))
+        print(f"the sampling interval is {num_samples}")
 
         # here we get an equal distribution of frames from the initial frame defined and the last frame of the video
-        frame_numbers = np.linspace(initial_frame, num_frames, frames_to_sample).tolist()
+        # using num_samples as a bound to ensure that the sampled
+        # frames come from the meat of the video, not on the beginning and last frames
+        edge_cutter = (1/(num_samples*2)) * num_frames
+        frame_numbers = np.linspace(initial_frame+edge_cutter, num_frames-edge_cutter, num_samples).tolist()
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
 
         # moviepy only takes time in seconds to return a frame, so we calculate the time(s) of the video 
@@ -94,8 +116,10 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
         
         text_file_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/labelhistory.txt"
 
-        # write to a text file about the images obtained from the videos in this code run if we want more for further use
-        with open(text_file_path, "w") as file:
+        # write to a text file about the images obtained from the videos in this code run if we want more images for future use
+        with open(text_file_path, "a") as file:
+            file.write('\n')
+            file.write(f"file name: {name}")
             file.write('\n')
             file.write(f"Time of file writes: {datetime.now()}")
             file.write('\n')
@@ -106,29 +130,43 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
 
         
                 
-def sampler(subject_number, initial_frame):
+def sampler(participants, initial_frame):
     """
         Takes files from a given test subject number and gathers a list
         of equally distributed frames to save for future annotations. 
 
         Initial frame is given to offset when gathering new sets of images to be used for annotations.
     """
+    
+    # Getting 1100 total in-distrubution frames and 100 total out of distribution frames
+    num_participant = 10
+    id_per_part = 1100/num_participant
+    ood_per_part = 100/num_participant
 
-    top_files = os.listdir(f"./Test_Subject_{subject_number}/Top_View")
-    side_files = os.listdir(f"./Test_Subject_{subject_number}/Side_View")
+    for i, participant in enumerate(participants):
 
-    id_top_files, ood_top_files = sorter(top_files)
+        top_files = os.listdir(f"./Test_Subject_{participant}/Top_View")
+        side_files = os.listdir(f"./Test_Subject_{participant}/Side_View")
 
-    id_side_files, ood_side_files = sorter(side_files)
+        id_top_files, ood_top_files = sorter(top_files)
 
-    # Save the frames into the respective folders
-    choose_frames(id_top_files, view="Top_View", dist_type="id", subject_number=subject_number, frames_to_sample=55, initial_frame=initial_frame)
-    choose_frames(id_side_files, "Side_View", "id", subject_number, 55, initial_frame)
+        id_side_files, ood_side_files = sorter(side_files)
+   
+        top_ood = (ood_per_part/2)
+        side_ood = (ood_per_part/2)
 
-    choose_frames(ood_top_files, "Top_View", "ood", subject_number, 5, initial_frame)
-    choose_frames(ood_side_files, "Side_View", "ood", subject_number, 5, initial_frame)
+        top_id = (id_per_part/2)
+        side_id = (id_per_part/2)
+        
+        print(f"{top_id}, {side_id}, {top_ood}, {side_ood}")    
+        # Save the frames into the respective folders
+        choose_frames(id_top_files, view="Top_View", dist_type="id", subject_number=participant, frames_to_sample=top_id, initial_frame=initial_frame)
+        choose_frames(id_side_files, "Side_View", "id", participant, side_id, initial_frame)
+
+        choose_frames(ood_top_files, "Top_View", "ood", participant, top_ood, initial_frame)
+        choose_frames(ood_side_files, "Side_View", "ood", participant, side_ood, initial_frame)
 
 
 if __name__=="__main__":
     # enter participant number to generate image directory with all values
-    sampler(subject_number = 1, initial_frame = 0) 
+    sampler(participants = [1], initial_frame = 0) 
