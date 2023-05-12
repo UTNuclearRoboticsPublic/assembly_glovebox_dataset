@@ -50,13 +50,12 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
 
         num_frames = int(file.fps * file.duration)
 
+        # find frames to sample for this file. We have to int cast it for np.linspace
         num_samples = int(frames_to_sample/len(files))
 
         print(f"the sampling interval is {num_samples}")
 
         # here we get an equal distribution of frames from the initial frame defined and the last frame of the video
-        # using num_samples as a bound to ensure that the sampled
-        # frames come from the meat of the video, not on the beginning and last frames
         frame_numbers = np.linspace(initial_frame, num_frames, num_samples).tolist()
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
 
