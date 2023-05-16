@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 from math import floor, ceil
 from datetime import datetime
+import pandas as pd
 
 def sorter(files):
     """
@@ -51,12 +52,17 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
         num_frames = int(file.fps * file.duration)
 
         # find frames to sample for this file. We have to int cast it for np.linspace
+        # Note: We don't expect `frames_to_sample` to be less than the number of files
         num_samples = int(frames_to_sample/len(files))
 
         print(f"the sampling interval is {num_samples}")
 
         # here we get an equal distribution of frames from the initial frame defined and the last frame of the video
-        frame_numbers = np.linspace(initial_frame, num_frames, num_samples).tolist()
+        if num_samples > 2:
+            frame_numbers = np.linspace(initial_frame, num_frames, num_samples).tolist()
+        if num_samples == 2:
+            frame_numbers = np.linspace(initial_frame, num_frames, 4).tolist()
+            frame_numbers = frame_numbers[1:3]
         frame_numbers = [int(floor(frame_num)) for frame_num in frame_numbers]
 
         # moviepy only takes time in seconds to return a frame, so we calculate the time(s) of the video 
@@ -97,18 +103,20 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
             os.makedirs(f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/", exist_ok=True)
             image.save(get_save_path(subject_number,dist_type, experiment_type, view, name, frame_num))
         
-        text_file_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/labelhistory.txt"
+        # saving this as a csv file instead
+        csv_file_path = f"./images/Test_Subject_{subject_number}/{dist_type}/{experiment_type}/{view}/labelhistory.csv"
+        data = []
+        data.append({
+            "file name": name,
+            "Time of file writes": datetime.now(),
+            "Initial frame": initial_frame,
+            "Frame nums saved": final_frame_nums
+        })
+        df = pd.DataFrame(data)
 
-        # write to a text file about the images obtained from the videos in this code run if we want more images for future use
-        with open(text_file_path, "a") as file:
-            file.write('\n')
-            file.write(f"file name: {name}")
-            file.write('\n')
-            file.write(f"Time of file writes: {datetime.now()}")
-            file.write('\n')
-            file.write(f"Initial frame: {initial_frame}")
-            file.write('\n')
-            file.write(f"Frame nums saved: {final_frame_nums}")
+        csv_file_exists = os.path.exists(csv_file_path)
+
+        df.to_csv(csv_file_path, mode='a', index=False, header= not csv_file_exists)
 
 
         
