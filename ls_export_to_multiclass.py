@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import glob
 import json
 import fnmatch
+import shutil
 
 def parse_json(path_to_json):
     with open(path_to_json) as json_file:
@@ -114,9 +115,35 @@ def get_json_directory_paths(project_number):
     
     return f'./raw/{file}', matching_folder
 
+def filter_labels_by_experiment(experiment_name, matching_folder):
+    new_dir = f'{matching_folder}/{experiment_name}'
+    os.makedirs(new_dir, exist_ok=True)
+    for file in os.listdir(matching_folder):
+        if file.startswith("J"):
+            shutil.move(f'{matching_folder}/{file}', new_dir)
+    return new_dir
+
+
 if __name__ == "__main__":
-    
-    json_file_path, matching_folder = get_json_directory_paths(project_number = 2)
+
+    'Edit the following to the project numbers that match before converting--'
+    proj_num_to_type = {
+        ("ood", "Top_View"): 10,
+        ("ood", "Bottom_View"): 11,
+        ("id", "Top_View") : 12,
+        ("id", "Bottom_View") : 13
+    }
     
     # edit the images path
-    convert('./images/Test_Subject_1/ood/J/Side_View', matching_folder, json_file_path)
+    # do all the conversions at once
+    for dis in ["ood", "id"]:
+        for task in ["J", "TB"]:
+            for view in ["Side_View", "Top_View"]:
+                key = (dis, view)
+                proj_num = int(proj_num_to_type[key])
+                json_file_path, matching_folder = get_json_directory_paths(project_number = proj_num)
+                matching_labels = filter_labels_by_experiment(experiment_name = task, matching_folder = matching_folder)
+                convert(f'./images/Test_Subject_1/{dis}/{task}/{view}', matching_folder, json_file_path)
+    
+    # convert('./images/Test_Subject_1/ood/J/Side_View', matching_folder, json_file_path)
+    
