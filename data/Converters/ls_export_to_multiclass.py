@@ -22,7 +22,7 @@ def parse_json(path_to_json):
 def convert(path_to_images, path_to_labels, path_to_json):
     labels = os.listdir(path_to_labels)
     images = os.listdir(path_to_images)
-    image = Image.open(f"{path_to_images}/{images[0]}")
+    image = Image.open(f"{path_to_images}/{images[1]}")
     height = np.asarray(image).shape[0]
     width = np.asarray(image).shape[1]
 
@@ -41,6 +41,8 @@ def convert(path_to_images, path_to_labels, path_to_json):
     for match in matches:
         image_name = match[0]
         image_id = match[1]
+
+        task = image_name.split("_")[0]
         
         matching_masks = []
         for label in labels:
@@ -76,7 +78,7 @@ def convert(path_to_images, path_to_labels, path_to_json):
                 final_arr[final_arr==3] = prev_val
             # else set it to the background class so it will be apparent when checking for errors
             else:
-                print("Error! Correct class for overlapping label not found.")
+                print("Correct class for overlapping label not found.")
                 final_arr[final_arr==3] = 0
             
             prev_indexes = indexes_mask
@@ -90,8 +92,9 @@ def convert(path_to_images, path_to_labels, path_to_json):
         image = Image.fromarray(image)
 
         if np.any(final_arr > 0):
-            os.makedirs(f"{path_to_images}/Labels", exist_ok=True)
-            image.save(f"{path_to_images}/Labels/{image_name}")
+            # os.makedirs(f"{path_to_images}/Labels", exist_ok=True)
+            os.makedirs(f"./Labels/Test_Subject_1/{dis}/{task}/{view}", exist_ok=True)
+            image.save(f"./Labels/Test_Subject_1/{dis}/{task}/{view}/{image_name}")
             # image.save(f"./Labels/{image_name}.png")
         
     plt.imshow(final_arr)
@@ -106,6 +109,8 @@ def get_json_directory_paths(project_number):
     file = matching_files[0]
     name = file.split('.')[0]
 
+    matching_folder = ""
+
     for root, dirs, files in os.walk('./raw'):
         for directory in dirs:
             ## check if the string directory matches the name
@@ -115,35 +120,36 @@ def get_json_directory_paths(project_number):
     
     return f'./raw/{file}', matching_folder
 
-def filter_labels_by_experiment(experiment_name, matching_folder):
-    new_dir = f'{matching_folder}/{experiment_name}'
-    os.makedirs(new_dir, exist_ok=True)
-    for file in os.listdir(matching_folder):
-        if file.startswith("J"):
-            shutil.move(f'{matching_folder}/{file}', new_dir)
-    return new_dir
+# def filter_labels_by_experiment(experiment_name, matching_folder):
+#     new_dir = f'{matching_folder}/{experiment_name}'
+#     os.makedirs(new_dir, exist_ok=True)
+#     for file in os.listdir(matching_folder):
+#         if file.startswith("J"):
+#             shutil.move(f'{matching_folder}/{file}', new_dir)
+#     return new_dir
 
 
 if __name__ == "__main__":
 
+    os.chdir('./data')
+
     'Edit the following to the project numbers that match before converting--'
     proj_num_to_type = {
-        ("ood", "Top_View"): 10,
-        ("ood", "Bottom_View"): 11,
-        ("id", "Top_View") : 12,
-        ("id", "Bottom_View") : 13
+        ("ood", "Top_View"): 9,
+        ("ood", "Side_View"): 8,
+        ("id", "Top_View") : 10,
+        ("id", "Side_View") : 12
     }
     
     # edit the images path
     # do all the conversions at once
     for dis in ["ood", "id"]:
-        for task in ["J", "TB"]:
-            for view in ["Side_View", "Top_View"]:
-                key = (dis, view)
-                proj_num = int(proj_num_to_type[key])
-                json_file_path, matching_folder = get_json_directory_paths(project_number = proj_num)
-                matching_labels = filter_labels_by_experiment(experiment_name = task, matching_folder = matching_folder)
-                convert(f'./images/Test_Subject_1/{dis}/{task}/{view}', matching_folder, json_file_path)
-    
+        for view in ["Side_View", "Top_View"]:
+            key = (dis, view)
+            proj_num = int(proj_num_to_type[key])
+            json_file_path, matching_folder = get_json_directory_paths(project_number = proj_num)
+            # matching_labels = filter_labels_by_experiment(experiment_name = task, matching_folder = matching_folder)
+            convert(f'./images/Test_Subject_1/{dis}/J/{view}', matching_folder, json_file_path)
+
     # convert('./images/Test_Subject_1/ood/J/Side_View', matching_folder, json_file_path)
     
