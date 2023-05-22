@@ -25,8 +25,8 @@ class AssemblyDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, index):
-        img = f"{self.path_to_images}/{self.images[0]}"
-        label = f"{self.path_to_labels}/{self.masks[0]}"
+        img = f"{self.path_to_images}/{self.images[index]}"
+        label = f"{self.path_to_labels}/{self.masks[index]}"
 
         print(img)
 
@@ -38,18 +38,19 @@ class AssemblyDataset(Dataset):
 
         img = self.transform(image)
         mask = self.transform(mask)
-
+        
+        # makes mask into size [height, width]
         mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
 
         return img, mask
     
 # print(f"the imagees are {os.listdir('./masks')}")
 
-dataset = AssemblyDataset('./images', './masks')
+dataset = AssemblyDataset(path_to_labels='./data/Trash/masks', path_to_images='./data/Trash/images')
 
 dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
 
 for i, (images, masks) in enumerate(dataloader):
     plt.imshow(np.transpose(images[0]))
-    plt.imshow(np.transpose(masks[0]))
+    plt.imshow(np.reshape(masks, (masks.shape[2], masks.shape[1], masks.shape[0])))
     plt.show()
