@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from torch.utils.data import random_split
 from argparse import ArgumentParser
 import os
+from datamodule import AssemblyDataModule
 
 class LitModel(pl.LightningModule):
     def __init__(self):
@@ -16,7 +17,7 @@ class LitModel(pl.LightningModule):
         self.model = UNET(in_channels=3, out_channels=3)
         self.save_hyperparameters()
 
-    def train(self, batch, batch_idx):
+    def training_step(self, batch, batch_idx):
         loss, raw_preds, y = self._common_set(batch, batch_idx)
         self.log_dict(
             {
@@ -87,27 +88,8 @@ if __name__ == "__main__":
     # # parse the args
     # args = parser.parse_args()
 
-
-
-    # test set
-    test_set = AssemblyDataset(path_to_labels='./data/Trash/masks', path_to_images='./data/Trash/images')
-    test_loader = DataLoader(dataset=test_set, batch_size=1, shuffle=True)
-
-    # train set. This will be used for val split also
-    train_set = AssemblyDataset(path_to_labels='./data/Trash/masks', path_to_images='./data/Trash/images')
-
-    # use random 20% of the training set as validation
-    train_set_size = int(len(train_set)*0.8)
-    valid_set_size = len(train_set) - train_set_size
-
-    # split train set into train and test set
-    train_set, valid_set = random_split(train_set, [train_set_size, 
-    valid_set_size])
-
-    train_loader = DataLoader(dataset=train_set, batch_size=1, shuffle=True)
-    valid_loader = DataLoader(dataset=valid_set, batch_size=1, shuffle=False)
-
     model = LitModel()
+    dm = AssemblyDataModule()
 
     # look into this method
     # using multiple GPUs when on TACC
@@ -116,9 +98,9 @@ if __name__ == "__main__":
 
     # loading a model
     # model = LitModel.load_from_checkpoint('./checkpoints/checkpoint.ckpt')
-    # predictions = trainer.predict(model, test_loader)
+    # predictions = trainer.predict(model, dm)
 
-    trainer.fit(model=model, train_loader=train_loader, val_loader=valid_loader)
-    trainer.test(model=model, dataloders=test_loader)
+    trainer.fit(model, dm)
+    trainer.test(model, dm)
     # use trainer.tune to find optimal hyperparameters
     # look into debugging so you can test beforehand
