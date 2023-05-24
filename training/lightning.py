@@ -12,12 +12,15 @@ import os
 from datamodule import AssemblyDataModule
 from pytorch_lightning import loggers as pl_loggers
 import torchvision
+import torchmetrics
+from metrics import *
 
 class LitModel(pl.LightningModule):
     def __init__(self):
         super(LitModel, self).__init__()
         self.model = UNET(in_channels=3, out_channels=3)
         self.save_hyperparameters()
+        self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
     def training_step(self, batch, batch_idx):
         loss, raw_preds= self._common_set(batch, batch_idx)
@@ -28,6 +31,9 @@ class LitModel(pl.LightningModule):
             prog_bar=True
         )
 
+        # why was no training loss recorded?
+        # what is hp metric
+
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -36,6 +42,7 @@ class LitModel(pl.LightningModule):
         self.log_dict(
             {
                 "val_loss": loss,
+                "val_iou": self.iou(raw_preds, int(y))
             },
             prog_bar=True
         )
@@ -49,6 +56,7 @@ class LitModel(pl.LightningModule):
             self._make_grid(predictions, "val_preds")
 
     def test_step(self, batch, batch_idx):
+        x, y = batch
         # is this working properly? barely any metric data.
         loss, raw_preds = self._common_set(batch, batch_idx)
 
@@ -56,6 +64,9 @@ class LitModel(pl.LightningModule):
         self.log_dict(
             {
                 "test_loss": loss,
+                "test_iou": self.iou(raw_preds, int(y)),
+                "test_ace": adaptive_calibration_error(raw_preds, y),
+                "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True
         )
