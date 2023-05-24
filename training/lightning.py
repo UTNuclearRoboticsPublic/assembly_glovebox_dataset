@@ -10,6 +10,8 @@ from torch.utils.data import random_split
 from argparse import ArgumentParser
 import os
 from datamodule import AssemblyDataModule
+from pytorch_lightning import loggers as pl_loggers
+import torchvision
 
 class LitModel(pl.LightningModule):
     def __init__(self):
@@ -18,17 +20,19 @@ class LitModel(pl.LightningModule):
         self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
-        loss, raw_preds, y = self._common_set(batch, batch_idx)
+        loss, raw_preds= self._common_set(batch, batch_idx)
         self.log_dict(
             {
                 "train_loss": loss,
             },
             prog_bar=True
         )
+
         return loss
     
     def validation_step(self, batch, batch_idx):
-        loss, raw_preds, y = self._common_set(batch, batch_idx)
+        x, y = batch
+        loss, raw_preds= self._common_set(batch, batch_idx)
         self.log_dict(
             {
                 "val_loss": loss,
@@ -36,8 +40,15 @@ class LitModel(pl.LightningModule):
             prog_bar=True
         )
 
+        # for every two batches
+        if batch_idx % 2 == 0:
+            self._make_grid(x, "val_images")
+            predictions = torch.argmax(raw_preds, dim=1)
+            self._make_grid(predictions, "val_preds")
+
+
     def test_step(self, batch, batch_idx):
-        loss, raw_preds, y = self._common_set(batch, batch_idx)
+        loss, raw_preds = self._common_set(batch, batch_idx)
 
         # automatically averages these values across the epoch
         self.log_dict(
@@ -46,55 +57,48 @@ class LitModel(pl.LightningModule):
             },
             prog_bar=True
         )
+
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint
         # use argmax here
         x, y = batch
-        x = x.reshape(x.ize(0), -1)
         raw_preds = self.model(x)
         probs = F.softmax(raw_preds, dim=1)
         preds = torch.argmax(probs, dim=1)
         return preds
 
-    def write_on_epoch_end(self, trainer, pl_module, predictions, batch_indices):
-        # predictions you can make after each batch in the epoch
-        # save the image predictions here
-        torch.save(predictions, os.path.join(f'./pred{trainer.global_rank}.pt'))
-
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         return optimizer
-
-    def training_step_end(self):
-        # use this with softmax also need for val and test?
-        pass
     
     def _common_set(self, batch, batch_idx):
         x, y = batch
-        x = x.view(x.size(0), -1) # why this?
         raw_preds = self.model(x)
-        loss = F.cross_entropy(raw_preds, y)
-        return loss, raw_preds, y
+        loss = F.cross_entropy(raw_preds, y.long())
+        return loss, raw_preds
+    
+    # creates a grid of images and respective predictions in the validation set
+    def _make_grid(self, values, name):
+        grid = torchvision.utils.make_grid(values[0])
+        self.logger.experiment.add_image(
+            name,
+            grid,
+            self.global_step
+        )
 
 
 
 if __name__ == "__main__":
-
-    # # arg parsing with python - a bit inefficient
-    # parser = ArgumentParser()
-    # parser.add_argument("--devices", type=int, default=1)
-    # parser.add_argument("--epochs", type=int, default=150)
-
-    # # parse the args
-    # args = parser.parse_args()
-
+    torch.set_float32_matmul_precision('medium')
     model = LitModel()
     dm = AssemblyDataModule()
-
-    # look into this method
     # using multiple GPUs when on TACC
+
+    tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
+
+    # use fast_dev_run to check for bugs before training
     trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-                         accelerator="gpu", min_epochs=1, max_epochs=150)
+                         accelerator="gpu", max_epochs=15, logger=tensorboard, fast_dev_run=True)
 
     # loading a model
     # model = LitModel.load_from_checkpoint('./checkpoints/checkpoint.ckpt')
@@ -102,5 +106,4 @@ if __name__ == "__main__":
 
     trainer.fit(model, dm)
     trainer.test(model, dm)
-    # use trainer.tune to find optimal hyperparameters
-    # look into debugging so you can test beforehand
+    # look into debugging so you can test beforehand    
