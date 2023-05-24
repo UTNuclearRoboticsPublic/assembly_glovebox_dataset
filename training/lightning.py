@@ -44,10 +44,12 @@ class LitModel(pl.LightningModule):
         if batch_idx % 2 == 0:
             self._make_grid(x, "val_images")
             predictions = torch.argmax(raw_preds, dim=1)
+
+            # predictions only on 0, 1 (most likely because we need more epochs) -> check that dim is correct, though
             self._make_grid(predictions, "val_preds")
 
-
     def test_step(self, batch, batch_idx):
+        # is this working properly? barely any metric data.
         loss, raw_preds = self._common_set(batch, batch_idx)
 
         # automatically averages these values across the epoch
@@ -96,9 +98,9 @@ if __name__ == "__main__":
 
     tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
 
-    # use fast_dev_run to check for bugs before training
+    # why no checkpoint added?
     trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-                         accelerator="gpu", max_epochs=15, logger=tensorboard, fast_dev_run=True)
+                         accelerator="gpu", max_epochs=15, logger=tensorboard, fast_dev_run=False)
 
     # loading a model
     # model = LitModel.load_from_checkpoint('./checkpoints/checkpoint.ckpt')
