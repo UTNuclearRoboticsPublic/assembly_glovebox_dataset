@@ -11,26 +11,26 @@ from argparse import ArgumentParser
 import os
 from datamodule import AssemblyDataModule
 from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning.profilers import PyTorchProfiler
 import torchvision
 import torchmetrics
 from metrics import *
 import numpy as np
+from pytorch_lightning.cli import LightningCLI
 
 class LitModel(pl.LightningModule):
     def __init__(self):
         super(LitModel, self).__init__()
         self.model = UNET(in_channels=3, out_channels=3)
-        self.save_hyperparameters()
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
+        # self.save_hyperparameters()
+
 
     def training_step(self, batch, batch_idx):
         loss, raw_preds= self._common_set(batch, batch_idx)
-        self.log_dict(
-            {
-                "train_loss": loss,
-            },
-            prog_bar=True
-        )
+
+        # defualt on epoch=False, which is why it was not showing earlier
+        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True)
 
         # why was no training loss recorded?
         # what is hp metric
@@ -122,24 +122,20 @@ class LitModel(pl.LightningModule):
             self.global_step,
         )
 
+# if __name__ == "__main__":
 
 
-if __name__ == "__main__":
-    torch.set_float32_matmul_precision('medium')
-    model = LitModel()
-    dm = AssemblyDataModule()
-    # using multiple GPUs when on TACC
+#     torch.set_float32_matmul_precision('medium')
+#     model = LitModel()
+#     dm = AssemblyDataModule()
 
-    tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
+#     tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
 
-    # why no checkpoint added?
-    trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-                         accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=False)
+#     trainer = pl.Trainer(default_root_dir='./checkpoints/', 
+#                          accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=False,
+#                          profiler="pytorch")
 
-    # loading a model
-    # model = LitModel.load_from_checkpoint('./checkpoints/checkpoint.ckpt')
-    # predictions = trainer.predict(model, dm)
 
-    trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_8/checkpoints/epoch=87-step=88.ckpt')
-    trainer.test(model, dm)
-    # look into debugging so you can test beforehand    
+#     trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_10/checkpoints/epoch=101-step=102.ckpt')
+
+#     trainer.test(model, dm)
