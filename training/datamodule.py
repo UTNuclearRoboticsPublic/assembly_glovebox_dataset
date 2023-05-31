@@ -9,7 +9,7 @@ class AssemblyDataModule(pl.LightningDataModule):
     def setup(self, stage: str):
 
         if stage=="test" or stage=="predict":
-            self.test_set = AssemblyDataset(path_to_labels='./data/Labels/Test_Subject_1/ood/J/Side_View', path_to_images='./data/images/Test_Subject_1/ood/J/Side_View')
+            self.test_set = AssemblyDataset(path_to_labels='./data/Labels/Test_Subject_1/id/J/Top_View', path_to_images='./data/images/Test_Subject_1/id/TB/Top_View')
         
         if stage=="fit":
             train_set = AssemblyDataset(path_to_labels='./data/Labels/Test_Subject_1/ood/J/Side_View', path_to_images='./data/images/Test_Subject_1/ood/J/Side_View')

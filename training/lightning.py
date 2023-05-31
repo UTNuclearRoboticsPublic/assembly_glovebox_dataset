@@ -14,6 +14,7 @@ from pytorch_lightning import loggers as pl_loggers
 import torchvision
 import torchmetrics
 from metrics import *
+import numpy as np
 
 class LitModel(pl.LightningModule):
     def __init__(self):
@@ -42,7 +43,7 @@ class LitModel(pl.LightningModule):
         self.log_dict(
             {
                 "val_loss": loss,
-                "val_iou": self.iou(raw_preds, int(y))
+                "val_iou": self.iou(raw_preds, y.to(torch.int32))
             },
             prog_bar=True
         )
@@ -64,7 +65,7 @@ class LitModel(pl.LightningModule):
         self.log_dict(
             {
                 "test_loss": loss,
-                "test_iou": self.iou(raw_preds, int(y)),
+                "test_iou": self.iou(raw_preds, y.to(torch.int32)),
                 "test_ace": adaptive_calibration_error(raw_preds, y),
                 "test_entropy": predictive_entropy(raw_preds)
             },
@@ -92,11 +93,33 @@ class LitModel(pl.LightningModule):
     
     # creates a grid of images and respective predictions in the validation set
     def _make_grid(self, values, name):
-        grid = torchvision.utils.make_grid(values[0])
+        # grid = torchvision.utils.make_grid(values[0])
+
+        preds = values[0]
+
+        if name == "val_preds":
+
+            preds = preds.cpu().numpy()
+
+
+            color_map = {
+                0: (0, 0, 0),
+                1: (0, 255, 0),
+                2: (0, 0, 255)
+            }
+
+            final_image = np.zeros((preds.shape[0], preds.shape[1], 3), dtype=np.uint8)
+            for idx, color in color_map.items():
+                final_image[preds == idx] = color
+
+            preds = np.transpose(final_image, (2, 0, 1))
+
+
+
         self.logger.experiment.add_image(
             name,
-            grid,
-            self.global_step
+            preds,
+            self.global_step,
         )
 
 
@@ -111,12 +134,12 @@ if __name__ == "__main__":
 
     # why no checkpoint added?
     trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-                         accelerator="gpu", max_epochs=15, logger=tensorboard, fast_dev_run=False)
+                         accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=False)
 
     # loading a model
     # model = LitModel.load_from_checkpoint('./checkpoints/checkpoint.ckpt')
     # predictions = trainer.predict(model, dm)
 
-    trainer.fit(model, dm)
+    trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_8/checkpoints/epoch=87-step=88.ckpt')
     trainer.test(model, dm)
     # look into debugging so you can test beforehand    

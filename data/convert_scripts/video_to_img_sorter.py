@@ -20,7 +20,7 @@ def sorter(files):
             # if it is not a green screen video, it is ID (because green screen is mentioned in the last part of the file naming convention)
             if (file.split("_")[-1]).startswith("GL"):
                 id.append(file)
-            # if it is a greed screen video, it is OOD
+            # if it is a green screen video, it is OOD
             else:
                 ood.append(file)
         # if there are no gloves in the video, it is OOD
@@ -36,7 +36,7 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
         and saves the unlabelled frames to its respective folder location.
     """
 
-    head_dir = f"/Test_Subject_{subject_number}/{view}"
+    # head_dir = f"/Test_Subject_{subject_number}/{view}"
 
     def get_save_path(subject_number, dist_type, experiment_type, view, name, frame_num):
         "Returns the path where the label will be saved"
@@ -47,7 +47,7 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
 
         name = file
 
-        file = VideoFileClip(f"./Test_Subject_{subject_number}/{view}" + f"/{file}")
+        file = VideoFileClip(f"./videos/Test_Subject_{subject_number}/{view}" + f"/{file}")
 
         num_frames = int(file.fps * file.duration)
 
@@ -74,7 +74,12 @@ def choose_frames(files, view, dist_type, subject_number, frames_to_sample, init
 
         frames = []
         for time in frame_times:
-            frames.append(file.get_frame((time)))
+            try:
+                frames.append(file.get_frame((time)))
+            except:
+                time -= 1
+                frames.append(file.get_frame((time)))
+
 
         # going through each frame and saving it as an image
         final_frame_nums = []
@@ -129,8 +134,8 @@ def sampler(participant, initial_frame, id_per_part, ood_per_part):
         Initial frame is given to offset when gathering new sets of images to be used for annotations.
     """
 
-    top_files = os.listdir(f"./Test_Subject_{participant}/Top_View")
-    side_files = os.listdir(f"./Test_Subject_{participant}/Side_View")
+    top_files = os.listdir(f"./videos/Test_Subject_{participant}/Top_View")
+    side_files = os.listdir(f"./videos/Test_Subject_{participant}/Side_View")
 
     id_top_files, ood_top_files = sorter(top_files)
 
@@ -159,5 +164,5 @@ if __name__=="__main__":
     id_per_part -> how many in-distribution frames you want from the given participant
     ood_per_part -> how many out-of-distribution frames you want from the given partiicpant
     """
-
-    sampler(participant = 1, initial_frame = 0, id_per_part=120, ood_per_part=24) 
+    os.chdir('./data')
+    sampler(participant = 4, initial_frame = 0, id_per_part=120, ood_per_part=24) 
