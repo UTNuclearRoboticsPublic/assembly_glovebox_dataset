@@ -98,47 +98,54 @@ class LitModel(pl.LightningModule):
     def _make_grid(self, values, name):
         # grid = torchvision.utils.make_grid(values[0])
 
-        preds = values[0]
-
         if name == "val_preds":
+            
+            values = values.cpu().numpy()
 
-            preds = preds.cpu().numpy()
+            final_imgs = np.zeros((values.shape[0], 3, values.shape[1], values.shape[2]))
+
+            for idx, preds in enumerate(values):
+                color_map = {
+                    0: (0, 0, 0),
+                    1: (0, 255, 0),
+                    2: (0, 0, 255)
+                }
+
+                final_image = np.zeros((preds.shape[0], preds.shape[1], 3), dtype=np.uint8)
+                for index, color in color_map.items():
+                    final_image[preds == index] = color
+
+                preds = np.transpose(final_image, (2, 0, 1))
+
+                final_imgs[idx, :, :, :] = preds
+            values = final_imgs
 
 
-            color_map = {
-                0: (0, 0, 0),
-                1: (0, 255, 0),
-                2: (0, 0, 255)
-            }
-
-            final_image = np.zeros((preds.shape[0], preds.shape[1], 3), dtype=np.uint8)
-            for idx, color in color_map.items():
-                final_image[preds == idx] = color
-
-            preds = np.transpose(final_image, (2, 0, 1))
 
 
-
-        self.logger.experiment.add_image(
+        self.logger.experiment.add_images(
             name,
-            preds,
+            values[:3],
             self.global_step,
         )
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
 
-#     torch.set_float32_matmul_precision('medium')
-#     model = LitModel()
-#     dm = AssemblyDataModule()
+    torch.set_float32_matmul_precision('medium')
+    model = LitModel()
+    dm = AssemblyDataModule(
+        fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
+        test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
+    )
 
-#     tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
+    tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
 
-#     trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-#                          accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=False,
-#                          profiler="pytorch")
+    trainer = pl.Trainer(default_root_dir='./checkpoints/', 
+                         accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=False,
+                         profiler="pytorch")
 
 
-#     trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_10/checkpoints/epoch=101-step=102.ckpt')
+    trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_11/checkpoints/epoch=114-step=115.ckpt')
 
-#     trainer.test(model, dm)
+    trainer.test(model, dm)

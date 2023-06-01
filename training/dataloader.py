@@ -20,7 +20,7 @@ class AssemblyDataset(Dataset):
         # self.images = [file for file in os.listdir(path_to_images) if file.lower().endswith('.png')]
         # self.masks = [file for file in os.listdir(path_to_labels) if file.lower().endswith('.png')]
         
-        self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path)]
+        self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path) if file.endswith('.png')]
         self.masks = [os.path.join(path, file) for path in path_to_labels for file in os.listdir(path)]
 
 
