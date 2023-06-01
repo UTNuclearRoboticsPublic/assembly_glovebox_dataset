@@ -23,6 +23,9 @@ class LitModel(pl.LightningModule):
         super(LitModel, self).__init__()
         self.model = UNET(in_channels=3, out_channels=3)
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
+
+        #only use hyperparameters if you need it for instantiating the model
+        # otherwise, use it from the CLI only for simplicity
         # self.save_hyperparameters()
 
 

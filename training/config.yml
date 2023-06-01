@@ -7,7 +7,7 @@ trainer:
   precision: 32-true
   logger: true
   callbacks: null
-  fast_dev_run: false
+  fast_dev_run: true
   max_epochs: 150
   min_epochs: null
   max_steps: -1
@@ -39,4 +39,7 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: null
+data:
+  fit_query: ['Test_Subject_1', 'id', 'J, TB', 'Side_View, Top_View']
+  test_query: ['Test_Subject_1', 'ood', 'TB', 'Side_View']
 ckpt_path: null
