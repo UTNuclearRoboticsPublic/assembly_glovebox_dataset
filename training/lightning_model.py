@@ -19,9 +19,9 @@ import numpy as np
 from pytorch_lightning.cli import LightningCLI
 
 class LitModel(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, droprate=0):
         super(LitModel, self).__init__()
-        self.model = UNET(in_channels=3, out_channels=3)
+        self.model = UNET(in_channels=3, out_channels=3, droprate=0)
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
         #only use hyperparameters if you need it for instantiating the model
