@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+from torchmetrics import CalibrationError
 
 raw_preds = torch.rand(2, 3, 25, 25)
 y_true = torch.argmax(torch.rand(2, 3, 25, 25), dim=1)
@@ -60,6 +60,8 @@ def get_accuracy(class_idx, upper, lower, y, confidence_values, pred_values, sor
 
     return acc
 
+ace = 0
+
 batch_size = raw_preds.shape[0]
 # make handling batches happen in a function
 for batch_idx in range(batch_size):
@@ -96,3 +98,11 @@ for batch_idx in range(batch_size):
             prev_r = r
 
         print(sum)
+        
+    average = 1 / (num_ranges * classes)
+    ace += average * sum
+
+print(ace/batch_size)
+
+ece = CalibrationError(task='multiclass', num_classes=3, n_bins=15, norm='l1')
+print(ece(torch.softmax(raw_preds, dim=1), y_true))
