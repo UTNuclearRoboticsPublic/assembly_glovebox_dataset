@@ -14,9 +14,9 @@ def sort_probs(confidence):
     "Return a 1D tensor of sorted probabilities from given confidence"
 
     flat = torch.flatten(confidence)
-    sorted_one_hot, indices = torch.sort(flat)
+    sorted, indices = torch.sort(flat)
 
-    return sorted_one_hot
+    return sorted
  
 def get_accuracy(class_idx, upper, lower, y, confidence_values, pred_values, sort):
 
