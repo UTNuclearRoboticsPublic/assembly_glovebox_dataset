@@ -129,17 +129,17 @@ class LitModel(pl.LightningModule):
             self.global_step,
         )
 
-# def ensemble_predict(models, dm):
-def ensemble_predict():
+def ensemble_predict(models, dm):
+# def ensemble_predict():
 
-    dm = AssemblyDataModule(
-            fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
-            test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
-        )
+    # dm = AssemblyDataModule(
+    #         fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
+    #         test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
+    #     )
     
-    model1 = LitModel()
-    model2 = LitModel()
-    models = [model1, model2]
+    # model1 = LitModel()
+    # model2 = LitModel()
+    # models = [model1, model2]
 
     dm.setup("test")
 
@@ -185,8 +185,8 @@ def ensemble_run(num_models):
 
 
 if __name__ == "__main__":
-    # ensemble_run(2)
-    ensemble_predict()
+    ensemble_run(2)
+    # ensemble_predict()
 
     # torch.set_float32_matmul_precision('medium')
     # model = LitModel()
