@@ -129,81 +129,26 @@ class LitModel(pl.LightningModule):
             self.global_step,
         )
 
-def ensemble_predict(models, dm):
-# def ensemble_predict():
-
-    # dm = AssemblyDataModule(
-    #         fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
-    #         test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
-    #     )
-    
-    # model1 = LitModel()
-    # model2 = LitModel()
-    # models = [model1, model2]
-
-    dm.setup("test")
-
-    test_data = dm.test_dataloader()
-    for batch in test_data:
-        x, y = batch
-        raw_preds = []
-        for model in models:
-                pred = model.model(x)
-                raw_preds.append(pred)
-        preds_stack = torch.stack(raw_preds)
-        avg_preds = torch.mean(preds_stack, dim=0)
-
-        loss = F.cross_entropy(avg_preds, y.long())
-
-        iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
-
-        test_iou = iou(avg_preds, y.to(torch.int32))
-
-def ensemble_run(num_models):
-    models = []
-    for _ in range(num_models):
-        torch.set_float32_matmul_precision('medium')
-        model = LitModel()
-        dm = AssemblyDataModule(
-            fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
-            test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
-        )
-
-        tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
-
-        trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-                            accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=True,
-                            profiler="pytorch")
-
-        # trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_11/checkpoints/epoch=114-step=115.ckpt')
-        trainer.fit(model, dm)
-
-        models.append(model)
-
-    ensemble_predict(models, dm)
-
 
 
 if __name__ == "__main__":
-    ensemble_run(2)
-    # ensemble_predict()
 
-    # torch.set_float32_matmul_precision('medium')
-    # model = LitModel()
-    # dm = AssemblyDataModule(
-    #     fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
-    #     test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
-    # )
+    torch.set_float32_matmul_precision('medium')
+    model = LitModel()
+    dm = AssemblyDataModule(
+        fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
+        test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
+    )
 
-    # tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
+    tensorboard = pl_loggers.TensorBoardLogger(save_dir='./logs')
 
-    # trainer = pl.Trainer(default_root_dir='./checkpoints/', 
-    #                      accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=True,
-    #                      profiler="pytorch")
+    trainer = pl.Trainer(default_root_dir='./checkpoints/', 
+                         accelerator="gpu", max_epochs=150, logger=tensorboard, fast_dev_run=True,
+                         profiler="pytorch")
 
-    # # trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_11/checkpoints/epoch=114-step=115.ckpt')
-    # trainer.fit(model, dm)
+    # trainer.fit(model, dm, ckpt_path='./logs/lightning_logs/version_11/checkpoints/epoch=114-step=115.ckpt')
+    trainer.fit(model, dm)
 
-    # trainer.test(model, dm)
+    trainer.test(model, dm)
 
     # deep ensemble testing
