@@ -1,21 +1,28 @@
 import pytorch_lightning as pl
 import torch
-from UNET import UNET
 import torch.nn.functional as F
 from datamodule import AssemblyDataModule
 from pytorch_lightning import loggers as pl_loggers
 import torchmetrics
 from metrics import *
 import numpy as np
-from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer
-from PIL import Image
+from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
 
 class OneFormerLitModel(pl.LightningModule):
     def __init__(self, droprate=0):
         super(OneFormerLitModel, self).__init__()
-        self.model = OneFormerModel.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny")
-        self.processor = OneFormerProcessor.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny")
+
+        id2label = {
+            0: "background",
+            1: "left_hand",
+            2: "right_hand"
+        }
+
+        self.model = OneFormerForUniversalSegmentation.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny", id2label=id2label, label2id = {v: k for k, v in id2label.items()},
+                                                          num_classes=3, ignore_mismatched_sizes=True, num_queries=3)
+        self.processor = OneFormerProcessor.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny",metadata=id2label, num_labels=3, class_names=["background", "left_hand", "right_hand"], do_reduce_labels=True,
+                                                                                                                                                          ignore_mismatched_sizes=True) 
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
 
@@ -78,9 +85,9 @@ class OneFormerLitModel(pl.LightningModule):
     def _common_set(self, batch, batch_idx):
         x, y = batch
         inputs = self.processor(x, ["semantic"], return_tensors="pt")
-        raw_preds = self.model(inputs)
+        raw_preds = self.model(**inputs)
         loss = F.cross_entropy(raw_preds, y.long())
-        return loss, raw_preds
+        return loss, raw_preds.transformer_decoder_mask_predictions
     
     # creates a grid of images and respective predictions in the validation set
     def _make_grid(self, values, name):
@@ -108,9 +115,6 @@ class OneFormerLitModel(pl.LightningModule):
                 final_imgs[idx, :, :, :] = preds
             values = final_imgs
 
-
-
-
         self.logger.experiment.add_images(
             name,
             values[:3],
@@ -122,7 +126,7 @@ class OneFormerLitModel(pl.LightningModule):
 if __name__ == "__main__":
 
     torch.set_float32_matmul_precision('medium')
-    model = LitModel()
+    model = OneFormerLitModel()
     dm = AssemblyDataModule(
         fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
         test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
@@ -138,5 +142,3 @@ if __name__ == "__main__":
     trainer.fit(model, dm)
 
     trainer.test(model, dm)
-
-    # deep ensemble testing
