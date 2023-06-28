@@ -78,7 +78,7 @@ class UNET(nn.Module):
 
 def test():
     x = torch.randn((7, 3, 161, 161))
-    model = UNET_Dropout(in_channels=3, out_channels=3)
+    model = UNET(in_channels=3, out_channels=3)
     preds = model(x)
     print(preds.shape == x.shape)
 

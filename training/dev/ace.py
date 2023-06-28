@@ -26,7 +26,7 @@ def get_accuracy(class_idx, upper, lower, y, confidence_values, pred_values, sor
     
     # filter confidence tensor for prediction probabilities only for elements of the current class
     # then, return the indices where these filtered values are in the matrix
-    fil_confidence = torch.where(y == class_idx, confidence_values, 0)
+    fil_confidence = torch.where(pred_values == class_idx, confidence_values, -1)
     fil_idxs = torch.where((fil_confidence >= lower) & (fil_confidence <= upper))
 
     # get values of the ground truth and predicted values only
@@ -141,5 +141,5 @@ if __name__ == '__main__':
     print(ace)
 
     # this is for cross-referencing what the ece looks like
-    # ece = CalibrationError(task='multiclass', num_classes=3, n_bins=15, norm='l1')
-    # print(ece(torch.softmax(raw_preds, dim=1), y_true))
+    ece = CalibrationError(task='multiclass', num_classes=3, n_bins=15, norm='l1')
+    print(ece(torch.softmax(raw_preds, dim=1), y_true))
