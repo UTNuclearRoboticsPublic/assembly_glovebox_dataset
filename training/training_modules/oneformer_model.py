@@ -1,15 +1,17 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from datamodule import AssemblyDataModule
 from pytorch_lightning import loggers as pl_loggers
 import torchmetrics
 from metrics import *
 import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
+from datamodule import AssemblyDataModule
+from lightning_model import LitModel
 
-class OneFormerLitModel(pl.LightningModule):
+
+class OneFormerLitModel(LitModel):
     def __init__(self, droprate=0):
         super(OneFormerLitModel, self).__init__()
 
@@ -25,49 +27,6 @@ class OneFormerLitModel(pl.LightningModule):
                                                                 size=644, ignore_mismatched_sizes=True) 
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
-
-    def training_step(self, batch, batch_idx):
-        loss, raw_preds= self._common_set(batch, batch_idx)
-
-        # defualt on epoch=False, which is why it was not showing earlier
-        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True)
-
-        return loss
-    
-    def validation_step(self, batch, batch_idx):
-        x, y = batch
-        loss, raw_preds= self._common_set(batch, batch_idx)
-        self.log_dict(
-            {
-                "val_loss": loss,
-                "val_iou": self.iou(raw_preds, y.to(torch.int32))
-            },
-            prog_bar=True
-        )
-
-        # for every two batches
-        if batch_idx % 2 == 0:
-            self._make_grid(x, "val_images")
-            predictions = torch.argmax(raw_preds, dim=1)
-
-            # predictions only on 0, 1 (most likely because we need more epochs) -> check that dim is correct, though
-            self._make_grid(predictions, "val_preds")
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        # is this working properly? barely any metric data.
-        loss, raw_preds = self._common_set(batch, batch_idx)
-
-        # automatically averages these values across the epoch
-        self.log_dict(
-            {
-                "test_loss": loss,
-                "test_iou": self.iou(raw_preds, y.to(torch.int32)),
-                "test_ace": adaptive_calibration_error(raw_preds, y),
-                "test_entropy": predictive_entropy(raw_preds)
-            },
-            prog_bar=True
-        )
 
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint
