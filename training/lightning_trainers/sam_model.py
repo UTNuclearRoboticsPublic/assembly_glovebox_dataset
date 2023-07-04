@@ -1,4 +1,4 @@
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import loggers as pl_loggers
@@ -17,7 +17,7 @@ from transformers import SamMaskDecoderConfig, SamProcessor, SamModel
 from dataloaders.datamodule import AssemblyDataModule
 from models import UNET
 
-from lightning_model import LitModel
+from lightning_trainers.lightning_model import LitModel
 
 class SamModel(LitModel):
     def __init__(self):

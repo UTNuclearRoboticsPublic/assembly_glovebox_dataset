@@ -1,4 +1,4 @@
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import loggers as pl_loggers
@@ -8,7 +8,7 @@ import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
 from dataloaders.datamodule import AssemblyDataModule
-from lightning_model import LitModel
+from lightning_trainers.lightning_model import LitModel
 
 
 class OneFormerLitModel(LitModel):

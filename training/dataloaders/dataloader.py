@@ -17,24 +17,16 @@ class AssemblyDataset(Dataset):
         self.transform = transform
         self.path_to_images = path_to_images
         self.path_to_labels = path_to_labels
-        # self.images = [file for file in os.listdir(path_to_images) if file.lower().endswith('.png')]
-        # self.masks = [file for file in os.listdir(path_to_labels) if file.lower().endswith('.png')]
-        
+
         self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path) if file.endswith('.png')]
         self.masks = [os.path.join(path, file) for path in path_to_labels for file in os.listdir(path)]
 
 
 
     def __len__(self) -> int:
-        # print(f"the imagees are {self.images}")
         return len(self.images)
 
     def __getitem__(self, index):
-        # img = f"{self.path_to_images}/{self.images[index]}"
-        # label = f"{self.path_to_labels}/{self.masks[index]}"
-
-        print(f"the images are {self.images}")
-        print(f"the masks are {self.masks} adn index is {index} and {self.path_to_labels} is {self.path_to_images}")
 
         img = self.images[index]
         label = self.masks[index]
@@ -43,12 +35,11 @@ class AssemblyDataset(Dataset):
         image = image.convert("RGB")
 
         mask = Image.open(label)
-        print(np.array(mask).shape) # some are 720 x 1280, others are 1080 x 1920
 
         img = self.transform(image)
         mask = self.transform(mask)
         
-        # makes mask into size [height, width]
+        # makes mask into size [height, width] with respective class at each index
         mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
 
         return img, mask
@@ -56,7 +47,6 @@ class AssemblyDataset(Dataset):
 
 if __name__ == "__main__":
     # test the loader with the below
-    # print(f"the imagees are {os.listdir('./masks')}")
 
     dataset = AssemblyDataset(path_to_labels=['.\\data\\Labels\\Test_Subject_1\\id\\J\\Side_View', '.\\data\\Labels\\Test_Subject_1\\id\\J\\Top_View'], 
                               path_to_images=['.\\data\\Labels\\Test_Subject_1\\id\\J\\Side_View', '.\\data\\Labels\\Test_Subject_1\\id\\J\\Top_View'])

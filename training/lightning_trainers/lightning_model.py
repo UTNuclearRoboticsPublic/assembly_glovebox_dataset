@@ -1,4 +1,3 @@
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from models.UNET import UNET
@@ -7,8 +6,7 @@ from torch.utils.data import random_split
 from argparse import ArgumentParser
 import os
 from dataloaders.datamodule import AssemblyDataModule
-from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.profilers import PyTorchProfiler
+import lightning.pytorch as pl
 import torchvision
 import torchmetrics
 from metrics import *
