@@ -7,7 +7,7 @@ from metrics import *
 import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
-from datamodule import AssemblyDataModule
+from dataloaders.datamodule import AssemblyDataModule
 from lightning_model import LitModel
 
 

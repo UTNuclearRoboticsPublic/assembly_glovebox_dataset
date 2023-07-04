@@ -6,7 +6,6 @@ import torchmetrics
 from metrics import *
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 import torch
 from tqdm import  tqdm
 import torchvision.transforms as transforms

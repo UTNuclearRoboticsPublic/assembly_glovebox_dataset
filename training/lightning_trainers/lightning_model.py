@@ -1,22 +1,18 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as TF
-from dataloader import AssemblyDataset
-from torch.utils.data import DataLoader
-from UNET import UNET
+from models.UNET import UNET
 import torch.nn.functional as F
 from torch.utils.data import random_split
 from argparse import ArgumentParser
 import os
-from datamodule import AssemblyDataModule
+from dataloaders.datamodule import AssemblyDataModule
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.profilers import PyTorchProfiler
 import torchvision
 import torchmetrics
 from metrics import *
 import numpy as np
-from pytorch_lightning.cli import LightningCLI
 
 class LitModel(pl.LightningModule):
     def __init__(self, droprate=0):

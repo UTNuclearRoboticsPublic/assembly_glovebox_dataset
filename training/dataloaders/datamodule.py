@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from torch.utils.data import DataLoader, random_split
-from dataloader import AssemblyDataset
+from dataloaders.dataloader import AssemblyDataset
 import os
 
 class AssemblyDataModule(pl.LightningDataModule):
