@@ -2,10 +2,10 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from datamodule import AssemblyDataModule
+from dataloaders.datamodule import AssemblyDataModule
 import torchmetrics
 from metrics import *
-from lightning_model import LitModel
+from lightning_trainers.lightning_model import LitModel
 from torch.utils.tensorboard import SummaryWriter
 
 
