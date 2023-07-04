@@ -9,5 +9,5 @@ For converting labels from Label Studio to multiclass labels, place the respecti
 These are the following directories that should be in this folder after dropping them in.
 - videos
 - images
-- labels
+- Labels
 - raw
