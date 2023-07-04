@@ -12,6 +12,12 @@ from lightning_trainers.lightning_model import LitModel
 
 
 class OneFormerLitModel(LitModel):
+    """
+    Lightning model for finetuning OneFormer datasets.
+    
+    This inherits some methods from the LitModel class.
+    """
+
     def __init__(self, droprate=0):
         super(OneFormerLitModel, self).__init__()
 
@@ -32,7 +38,9 @@ class OneFormerLitModel(LitModel):
         # used only when loading a model from a checkpoint
         # use argmax here
         x, y = batch
-        raw_preds = self.model(x)
+        inputs = self.processor(x, ["semantic"], return_tensors="pt")
+        raw_preds = self.model(**inputs)
+        raw_preds = raw_preds.transformer_decoder_mask_predictions
         probs = F.softmax(raw_preds, dim=1)
         preds = torch.argmax(probs, dim=1)
         return preds
@@ -47,38 +55,6 @@ class OneFormerLitModel(LitModel):
         raw_preds = self.model(**inputs)
         loss = F.cross_entropy(raw_preds, y.long())
         return loss, raw_preds.transformer_decoder_mask_predictions
-    
-    # creates a grid of images and respective predictions in the validation set
-    def _make_grid(self, values, name):
-        # grid = torchvision.utils.make_grid(values[0])
-
-        if name == "val_preds":
-            
-            values = values.cpu().numpy()
-
-            final_imgs = np.zeros((values.shape[0], 3, values.shape[1], values.shape[2]))
-
-            for idx, preds in enumerate(values):
-                color_map = {
-                    0: (0, 0, 0),
-                    1: (0, 255, 0),
-                    2: (0, 0, 255)
-                }
-
-                final_image = np.zeros((preds.shape[0], preds.shape[1], 3), dtype=np.uint8)
-                for index, color in color_map.items():
-                    final_image[preds == index] = color
-
-                preds = np.transpose(final_image, (2, 0, 1))
-
-                final_imgs[idx, :, :, :] = preds
-            values = final_imgs
-
-        self.logger.experiment.add_images(
-            name,
-            values[:3],
-            self.global_step,
-        )
 
 
 

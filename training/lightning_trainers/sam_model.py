@@ -7,16 +7,13 @@ from metrics import *
 import numpy as np
 import torch
 import torch
-from tqdm import  tqdm
 import torchvision.transforms as transforms
 from torch.optim import Adam
 from statistics import mean
 from PIL import Image
 from transformers import SamMaskDecoderConfig, SamProcessor, SamModel
-
 from dataloaders.datamodule import AssemblyDataModule
 from models import UNET
-
 from lightning_trainers.lightning_model import LitModel
 
 class SamModel(LitModel):
@@ -28,6 +25,7 @@ class SamModel(LitModel):
         self.processor = SamProcessor.from_pretrained("facebook/sam-vit-base", ignore_mismatched_sizes=True)
         self.model = SamModel.from_pretrained("facebook/sam-vit-base", ignore_mismatched_sizes=True, mask_decoder_config = dec_config)
         
+        # freezing the encoder of the model
         for name, param in self.model.named_parameters():
             if name.startswith("vision_encoder") or name.startswith("prompt_encoder"):
                 param.requires_grad_(False)
@@ -35,11 +33,17 @@ class SamModel(LitModel):
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
     def predict_step(self, batch, batch_idx):
-        # used only when loading a model from a checkpoint
-        # use argmax here
+        # used only when loading a model from a checkpoint/checking predictions
         x, y = batch
-        raw_preds = self.model(x)
-        probs = F.softmax(raw_preds, dim=1)
+
+        input_box = torch.from_numpy(np.array([[0, 0, x.shape[2], x.shape[3]]])).float()
+        input_boxes = torch.repeat(input_box.shape[0], 1, 1)
+        
+        inputs = self.processor(x, input_boxes = input_boxes, return_tensors="pt")
+        raw_preds = self.model(**inputs, multimask_output=True)
+
+        predicted_masks = raw_preds.pred_masks.squeeze(1) # result shape -> [1, 3, 256, 256]
+        probs = F.softmax(predicted_masks, dim=1)
         preds = torch.argmax(probs, dim=1)
         return preds
 
@@ -48,6 +52,7 @@ class SamModel(LitModel):
         return optimizer
     
     def _common_set(self, batch, batch_idx):
+        """Run a forward pass and calculate training loss"""
         x, y = batch
 
         input_box = torch.from_numpy(
