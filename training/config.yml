@@ -1,5 +1,6 @@
 seed_everything: true
 model:
+  class_path: lightning_trainers.lightning_model.LitModel
   droprate: 0
 trainer:
   accelerator: "gpu"
