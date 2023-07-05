@@ -1,14 +1,14 @@
 import lightning.pytorch as pl
 import torch
 import torch.nn.functional as F
-from pytorch_lightning import loggers as pl_loggers
+from lightning.pytorch import loggers as pl_loggers
 import torchmetrics
-from metrics import *
+from training.metrics import *
 import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
-from dataloaders.datamodule import AssemblyDataModule
-from lightning_trainers.lightning_model import LitModel
+from training.dataloaders.datamodule import AssemblyDataModule
+from training.lightning_trainers.lightning_model import LitModel
 
 
 class OneFormerLitModel(LitModel):
@@ -52,6 +52,7 @@ class OneFormerLitModel(LitModel):
     def _common_set(self, batch, batch_idx):
         x, y = batch
         inputs = self.processor(x, ["semantic"], return_tensors="pt")
+        inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs)
         loss = F.cross_entropy(raw_preds, y.long())
         return loss, raw_preds.transformer_decoder_mask_predictions

@@ -1,9 +1,9 @@
 import lightning.pytorch as pl
 import torch
 import torch.nn.functional as F
-from pytorch_lightning import loggers as pl_loggers
+from lightning.pytorch import loggers as pl_loggers
 import torchmetrics
-from metrics import *
+from training.metrics import *
 import numpy as np
 import torch
 import torch
@@ -12,19 +12,21 @@ from torch.optim import Adam
 from statistics import mean
 from PIL import Image
 from transformers import SamMaskDecoderConfig, SamProcessor, SamModel
-from dataloaders.datamodule import AssemblyDataModule
-from models import UNET
-from lightning_trainers.lightning_model import LitModel
 
-class SamModel(LitModel):
+from training.dataloaders.datamodule import AssemblyDataModule
+from training.models.UNET import UNET
+from training.lightning_trainers.lightning_model import LitModel
+
+class SamLitModel(LitModel):
     def __init__(self):
-        super(SamModel, self).__init__()
+        super(SamLitModel, self).__init__()
 
 
-        dec_config = SamMaskDecoderConfig(num_multimask_outputs=3, iou_head_depth=3)
+        self.dec_config = SamMaskDecoderConfig(num_multimask_outputs=3, iou_head_depth=3)
+        self.model = SamModel.from_pretrained("facebook/sam-vit-base", ignore_mismatched_sizes=True, mask_decoder_config = self.dec_config)
         self.processor = SamProcessor.from_pretrained("facebook/sam-vit-base", ignore_mismatched_sizes=True)
-        self.model = SamModel.from_pretrained("facebook/sam-vit-base", ignore_mismatched_sizes=True, mask_decoder_config = dec_config)
-        
+
+
         # freezing the encoder of the model
         for name, param in self.model.named_parameters():
             if name.startswith("vision_encoder") or name.startswith("prompt_encoder"):
@@ -37,7 +39,7 @@ class SamModel(LitModel):
         x, y = batch
 
         input_box = torch.from_numpy(np.array([[0, 0, x.shape[2], x.shape[3]]])).float()
-        input_boxes = torch.repeat(input_box.shape[0], 1, 1)
+        input_boxes = input_box.repeat(x.shape[0], 1, 1)
         
         inputs = self.processor(x, input_boxes = input_boxes, return_tensors="pt")
         raw_preds = self.model(**inputs, multimask_output=True)
@@ -62,9 +64,10 @@ class SamModel(LitModel):
                             ]
                           )
                     ).float()
-        input_boxes = torch.repeat(input_box.shape[0], 1, 1)
+        input_boxes = input_box.repeat(x.shape[0], 1, 1)
         
         inputs = self.processor(x, input_boxes = input_boxes, return_tensors="pt")
+        inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs, multimask_output=True)
 
         predicted_masks = raw_preds.pred_masks.squeeze(1) # result shape -> [1, 3, 256, 256]
@@ -77,7 +80,7 @@ class SamModel(LitModel):
 if __name__ == "__main__":
 
     torch.set_float32_matmul_precision('medium')
-    model = SamModel()
+    model = SamLitModel()
     dm = AssemblyDataModule(
         fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
         test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
