@@ -9,6 +9,7 @@ import torchvision
 import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
+from training.metrics import *
 
 from training.dataloaders.datamodule import AssemblyDataModule
 from training.models.UNET import UNET
@@ -65,7 +66,7 @@ class LitModel(pl.LightningModule):
             {
                 "test_loss": loss,
                 "test_iou": self.iou(raw_preds, y.to(torch.int32)),
-                "test_ace": adaptive_calibration_error(raw_preds, y),
+                "test_ace": adaptive_calibration_error(y_pred=raw_preds, y_true=y), # [4, 3, 161, 161] and [4, 161, 161]
                 "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True

@@ -22,7 +22,7 @@ def expected_calibration_error(preds, targets):
     ace = ece(preds, int(targets))
     return ace
 
-def adaptive_calibration_error(y_true, y_pred, num_bins=15):
+def adaptive_calibration_error(y_pred, y_true, num_bins=15):
     """
     Overall structure
 
@@ -48,16 +48,14 @@ def adaptive_calibration_error(y_true, y_pred, num_bins=15):
 
     """## Sorting softmax prediction and ground truth values (BEFORE BINNING)"""
 
-    num_ranges = 15
+    num_ranges = 23
 
     flattened = torch.flatten(probs, start_dim=2)
     sorted_pred, sort_indices = torch.sort(flattened, dim=1)
-    sorted_pred.shape
 
     """Doing this for the ground truth, using the indices from sorting the probabilities to sort this correctly"""
 
-    y_true.shape
-    ground = torch.nn.functional.one_hot(y_true, num_classes=3)
+    ground = torch.nn.functional.one_hot(y_true.long(), num_classes=3)
     ground_truth = ground.permute(0,-1, 1, 2)
 
     flat_gt = torch.flatten(ground_truth, start_dim=2)
@@ -67,7 +65,7 @@ def adaptive_calibration_error(y_true, y_pred, num_bins=15):
 
     """Doing this for the argmaxed predictions (using indices from sorted probabilities)"""
 
-    max_ground = torch.nn.functional.one_hot(y_hats, num_classes=3)
+    max_ground = torch.nn.functional.one_hot(y_hats.long(), num_classes=3)
     ground_arg = max_ground.permute(0,-1, 1, 2)
     flat_arg = torch.flatten(ground_arg, start_dim=2)
     sorted_arg = torch.gather(flat_arg, dim=1, index=sort_indices)
@@ -75,23 +73,23 @@ def adaptive_calibration_error(y_true, y_pred, num_bins=15):
 
     """## Binning softmax, ground truth values"""
 
-    chunked_preds = torch.chunk(sorted_pred, 15, dim=2)
+    chunked_preds = torch.chunk(sorted_pred, num_ranges, dim=2)
     binned_preds = torch.stack(chunked_preds, dim=2)
-    binned_preds.shape
 
-    chunked_gt = torch.chunk(sorted_gt, 15, dim=2)
+
+    chunked_gt = torch.chunk(sorted_gt, num_ranges, dim=2)
     binned_gt = torch.stack(chunked_gt, dim=2)
     binned_gt.shape
 
-    chunked_arg = torch.chunk(sorted_arg, 15, dim=2)
+    chunked_arg = torch.chunk(sorted_arg, num_ranges, dim=2)
     binned_arg = torch.stack(chunked_arg, dim=2)
-    binned_arg.shape
+    
 
     """## Calculating confidences"""
 
     # calculate the mean confidence for each binning range for each
     confidences = torch.mean(binned_preds, dim=3)
-    confidences.shape
+    
 
     """## Calculating accuracy for each binning range"""
 
@@ -99,7 +97,7 @@ def adaptive_calibration_error(y_true, y_pred, num_bins=15):
     nonzero_per_bin = torch.count_nonzero(differences, dim=3)
 
     acc = nonzero_per_bin / binned_gt.shape[-1]
-    acc.shape
+    
 
     """## Difference between accuracy and confidences"""
 
