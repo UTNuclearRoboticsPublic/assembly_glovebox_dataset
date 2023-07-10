@@ -1,6 +1,7 @@
 from lightning_trainers.lightning_model import LitModel
 from lightning_trainers.oneformer_model import OneFormerLitModel
-from lightning_trainers.sam_model import SamModel
+from lightning_trainers.sam_model import SamLitModel
+from lightning_trainers.mobilesam_model import MobileSamLitModel
 
 from dataloaders.datamodule import AssemblyDataModule
 from lightning.pytorch.cli import LightningCLI

@@ -24,9 +24,9 @@ from training.lightning_trainers.lightning_model import LitModel
 
 ### ADJUST THE DECODER CODE WHEN PIP INSTALLING
 
-class SamLitModel(LitModel):
+class MobileSamLitModel(LitModel):
     def __init__(self):
-        super(SamLitModel, self).__init__()
+        super(MobileSamLitModel, self).__init__()
         
         model_type = "vit_t"
         sam_checkpoint = "./MobileSAM/weights/mobile_sam.pt"
