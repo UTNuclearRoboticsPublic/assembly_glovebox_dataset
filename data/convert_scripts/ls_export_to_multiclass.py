@@ -20,9 +20,9 @@ def parse_json(path_to_json):
     return matches
 
 def convert(path_to_images, path_to_labels, path_to_json):
-    labels = os.listdir(path_to_labels)
-    images = os.listdir(path_to_images)
-    image = Image.open(f"{path_to_images}/{images[1]}")
+    labels = os.listdir(path_to_labels) # binary ground truth
+    images = os.listdir(path_to_images)  # raw images (not the ground truth)
+    image = Image.open(f"{path_to_images}/{images[1]}") # why the second index? probs cause used for height and width
     height = np.asarray(image).shape[0]
     width = np.asarray(image).shape[1]
 
@@ -36,18 +36,26 @@ def convert(path_to_images, path_to_labels, path_to_json):
         2: (0, 0, 255)
     }
 
-    matches = parse_json(path_to_json)
+    matches = parse_json(path_to_json) # json object return where each object has (image name, id)
+    
+    """"
+    to add annotators:
+    - in parse json, get the numbers of the annotators
+    - add an external for loop for each annotator
+    - when saving the multiclass label add the number of the annotator at the end (use either 1 or 2)
+    - 
+    """
 
     for match in matches:
         image_name = match[0]
         image_id = match[1]
 
-        task = image_name.split("_")[0]
+        task = image_name.split("_")[0] 
         
         matching_masks = []
         for label in labels:
-            label_id = int(label.split("-")[1])
-            if label_id == image_id:
+            label_id = int(label.split("-")[1]) # this is the id number on the ground truth
+            if label_id == image_id: # if the gt id matches the json id
                 matching_masks.append(label)
         
         final_arr = np.empty([height, width])
