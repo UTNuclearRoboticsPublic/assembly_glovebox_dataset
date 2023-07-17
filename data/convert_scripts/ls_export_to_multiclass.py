@@ -14,9 +14,11 @@ def parse_json(path_to_json):
     # declare tuple with image name and id
     matches = []
     for obj in data:
+        # save the annotator ID and what their unique numbers are
         image_name = obj["image"].split("-")[-1]
         image_id = int(obj['id'])
-        matches.append((image_name, image_id))
+        annotator = int(obj['annotator'])
+        matches.append((image_name, image_id, annotator))
     return matches
 
 def convert(path_to_images, path_to_labels, path_to_json):
@@ -49,14 +51,19 @@ def convert(path_to_images, path_to_labels, path_to_json):
     for match in matches:
         image_name = match[0]
         image_id = match[1]
+        annotator = match[2]
+        # add annotator number here
 
         task = image_name.split("_")[0] 
         
         matching_masks = []
         for label in labels:
             label_id = int(label.split("-")[1]) # this is the id number on the ground truth
-            if label_id == image_id: # if the gt id matches the json id
-                matching_masks.append(label)
+            # also extract the annotator number ("by-x")
+            label_annot_id = int(label.split("-")[-4])
+            if label_id == image_id: # if the gt id matches the json id, add if it matches the annotator
+                if label_annot_id == annotator:
+                    matching_masks.append(label)
         
         final_arr = np.empty([height, width])
         prev_indexes = np.empty([height, width])
@@ -101,7 +108,9 @@ def convert(path_to_images, path_to_labels, path_to_json):
 
         if np.any(final_arr > 0):
             # os.makedirs(f"{path_to_images}/Labels", exist_ok=True)
-            os.makedirs(f"./Labels/Test_Subject_1/{dis}/{task}/{view}", exist_ok=True)
+
+            # added annotator to top of save directory for each participant
+            os.makedirs(f"./Labels/Test_Subject_1/By_{annotator}/{dis}/{task}/{view}", exist_ok=True)
             image.save(f"./Labels/Test_Subject_1/{dis}/{task}/{view}/{image_name}")
             # image.save(f"./Labels/{image_name}.png")
         
