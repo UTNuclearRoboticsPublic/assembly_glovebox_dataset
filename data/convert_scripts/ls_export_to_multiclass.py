@@ -13,13 +13,16 @@ def parse_json(path_to_json):
         data = json.load(json_file)
     # declare tuple with image name and id
     matches = []
+    all_annotators = []
     for obj in data:
         # save the annotator ID and what their unique numbers are
         image_name = obj["image"].split("-")[-1]
         image_id = int(obj['id'])
         annotator = int(obj['annotator'])
+        all_annotators.append(annotator)
         matches.append((image_name, image_id, annotator))
-    return matches
+    unique_annotators = list(set(all_annotators)) # this is to only find unique annotators
+    return matches, unique_annotators
 
 def convert(path_to_images, path_to_labels, path_to_json):
     labels = os.listdir(path_to_labels) # binary ground truth
@@ -38,7 +41,7 @@ def convert(path_to_images, path_to_labels, path_to_json):
         2: (0, 0, 255)
     }
 
-    matches = parse_json(path_to_json) # json object return where each object has (image name, id)
+    matches, unique_annotators = parse_json(path_to_json) # json object return where each object has (image name, id)
     
     """"
     to add annotators:
@@ -109,8 +112,14 @@ def convert(path_to_images, path_to_labels, path_to_json):
         if np.any(final_arr > 0):
             # os.makedirs(f"{path_to_images}/Labels", exist_ok=True)
 
+            # save annotators as either 1 or 2
+            if annotator < max(unique_annotators):
+                num_save = 1
+            else:
+                num_save = 2
+
             # added annotator to top of save directory for each participant
-            os.makedirs(f"./Labels/Test_Subject_1/By_{annotator}/{dis}/{task}/{view}", exist_ok=True)
+            os.makedirs(f"./Labels/Test_Subject_1/By_{num_save}/{dis}/{task}/{view}", exist_ok=True)
             image.save(f"./Labels/Test_Subject_1/{dis}/{task}/{view}/{image_name}")
             # image.save(f"./Labels/{image_name}.png")
         
