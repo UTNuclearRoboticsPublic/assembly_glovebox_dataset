@@ -19,15 +19,17 @@ def parse_json(path_to_json):
         image_name = obj["image"].split("-")[-1]
         image_id = int(obj['id'])
         annotator = int(obj['annotator'])
+        orig_width = int(obj['tag'][0]['original_width'])
+        orig_height = int(obj['tag'][0]['original_height'])
         all_annotators.append(annotator)
-        matches.append((image_name, image_id, annotator))
+        matches.append((image_name, image_id, annotator, orig_width, orig_height))
     unique_annotators = list(set(all_annotators)) # this is to only find unique annotators
     return matches, unique_annotators
 
-def convert(path_to_images, path_to_labels, path_to_json):
+def convert(path_to_images, path_to_labels, path_to_json, participant_number):
     labels = os.listdir(path_to_labels) # binary ground truth
     images = os.listdir(path_to_images)  # raw images (not the ground truth)
-    image = Image.open(f"{path_to_images}/{images[1]}") # why the second index? probs cause used for height and width
+    image = Image.open(f"{path_to_labels}/{labels[1]}") # why the second index? probs cause used for height and width
     height = np.asarray(image).shape[0]
     width = np.asarray(image).shape[1]
 
@@ -55,6 +57,8 @@ def convert(path_to_images, path_to_labels, path_to_json):
         image_name = match[0]
         image_id = match[1]
         annotator = match[2]
+        orig_width = match[3]
+        orig_height = match[4]
         # add annotator number here
 
         task = image_name.split("_")[0] 
@@ -68,8 +72,9 @@ def convert(path_to_images, path_to_labels, path_to_json):
                 if label_annot_id == annotator:
                     matching_masks.append(label)
         
-        final_arr = np.empty([height, width])
-        prev_indexes = np.empty([height, width])
+
+        final_arr = np.empty([orig_height, orig_width])
+        prev_indexes = np.empty([orig_height, orig_width])
         prev_val = 0
         for index, label in enumerate(matching_masks):
             mask = Image.open(f"{path_to_labels}/{label}")
@@ -104,7 +109,7 @@ def convert(path_to_images, path_to_labels, path_to_json):
 
 
 
-        image = np.zeros((height, width, 3), dtype=np.uint8)
+        image = np.zeros((orig_height, orig_width, 3), dtype=np.uint8)
         for idx, color in color_map.items():
             image[final_arr == idx] = color
         image = Image.fromarray(image)
@@ -119,8 +124,8 @@ def convert(path_to_images, path_to_labels, path_to_json):
                 num_save = 2
 
             # added annotator to top of save directory for each participant
-            os.makedirs(f"./Labels/Test_Subject_1/By_{num_save}/{dis}/{task}/{view}", exist_ok=True)
-            image.save(f"./Labels/Test_Subject_1/{dis}/{task}/{view}/{image_name}")
+            os.makedirs(f"./Labels/Test_Subject_{participant_number}/By_{num_save}/{dis}/{task}/{view}", exist_ok=True)
+            image.save(f"./Labels/Test_Subject_{participant_number}/By_{num_save}/{dis}/{task}/{view}/{image_name}")
             # image.save(f"./Labels/{image_name}.png")
         
     plt.imshow(final_arr)
@@ -161,12 +166,14 @@ if __name__ == "__main__":
 
     'Edit the following to the project numbers that match before converting--'
     proj_num_to_type = {
-        ("ood", "Top_View"): 9,
-        ("ood", "Side_View"): 8,
-        ("id", "Top_View") : 10,
-        ("id", "Side_View") : 12
+        ("ood", "Top_View"): 33,
+        ("ood", "Side_View"): 34,
+        ("id", "Top_View") : 31,
+        ("id", "Side_View") : 32
     }
     
+    participant_number = 3
+
     # edit the images path
     # do all the conversions at once
     for dis in ["ood", "id"]:
@@ -175,7 +182,7 @@ if __name__ == "__main__":
             proj_num = int(proj_num_to_type[key])
             json_file_path, matching_folder = get_json_directory_paths(project_number = proj_num)
             # matching_labels = filter_labels_by_experiment(experiment_name = task, matching_folder = matching_folder)
-            convert(f'./images/Test_Subject_1/{dis}/J/{view}', matching_folder, json_file_path)
+            convert(f'./images/Test_Subject_1/{dis}/J/{view}', matching_folder, json_file_path, participant_number)
 
     # convert('./images/Test_Subject_1/ood/J/Side_View', matching_folder, json_file_path)
     
