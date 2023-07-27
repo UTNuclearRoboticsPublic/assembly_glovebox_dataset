@@ -17,7 +17,6 @@ from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredict
 from mobile_sam.utils.transforms import ResizeLongestSide
 
 
-
 from training.dataloaders.datamodule import AssemblyDataModule
 from training.models.UNET import UNET
 from training.lightning_trainers.lightning_model import LitModel
@@ -80,7 +79,14 @@ class MobileSamLitModel(LitModel):
             rep_boxes = input_boxes.repeat(x.shape[0], 1, 1) # shape of each box -> 0, 0, 768, 768
 
             sparse_embeddings, dense_embeddings = self.get_embeds(self.model, x, input_boxes = rep_boxes)
+        print(
+            f"image_embed {pixel_values.shape}",
+            f"pe {self.model.prompt_encoder.get_dense_pe().shape}",
+            f"sparse {sparse_embeddings.shape}",
+            f"dense {dense_embeddings.shape}",
+            f"x {x.shape}",
 
+        )
         raw_preds = self.get_prediction(
                             model=self.model,
                             input_image=input_image,
@@ -90,7 +96,8 @@ class MobileSamLitModel(LitModel):
                             image_embedding=pixel_values,
                             multimask_output=True)
         
-        loss = F.cross_entropy(raw_preds, y.long())
+        loss = self.get_loss(raw_preds, y)
+        # loss = F.cross_entropy(raw_preds, y.long())
 
         # adjust 0 if this is not working
         return loss, raw_preds
@@ -144,10 +151,21 @@ class MobileSamLitModel(LitModel):
 if __name__ == "__main__":
 
     torch.set_float32_matmul_precision('medium')
-    model = SamLitModel()
+    model = MobileSamLitModel()
     dm = AssemblyDataModule(
-        fit_query= ['Test_Subject_1', 'ood', 'J', 'Top_View'],
-        test_query= ['Test_Subject_1', 'ood', 'TB', 'Side_View']
+        fit_query= {
+            'participants': ['Test_Subject_3'], # 1, 2, 3, 4, 6, 7, 9, 10, 11, 12
+            'distribution':['ood'], # ood, id
+            'task': ['J'], # J, TB
+            'view': ['Top_View'] # Top_View, Side_View
+        },
+        test_query= {
+            # queries can be the same as above
+            'participants': ['Test_Subject_3'], 
+            'distribution':['ood'],
+            'task': ['J'], 
+            'view': ['Top_View'],
+        }
     )
 
     tensorboard = pl_loggers.TensorBoardLogger(save_dir='./tb_logs', name="sam")

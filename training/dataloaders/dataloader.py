@@ -13,36 +13,53 @@ transform = transforms.Compose ([
 ])
 
 class AssemblyDataset(Dataset):
-    def __init__(self, path_to_images, path_to_labels):
+    def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels):
         self.transform = transform
         self.path_to_images = path_to_images
-        self.path_to_labels = path_to_labels
+
+        # TODO: set two paths to make two self.masks so that there is one for each annotator
+
+        self.path_to_1_labels = path_to_1_labels
+        self.path_to_2_labels = path_to_2_labels
 
         self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path) if file.endswith('.png')]
-        self.masks = [os.path.join(path, file) for path in path_to_labels for file in os.listdir(path)]
+        self.masks_1 = [os.path.join(path, file) for path in path_to_1_labels for file in os.listdir(path)]
+        self.masks_2 = [os.path.join(path, file) for path in path_to_2_labels for file in os.listdir(path)]
 
 
 
     def __len__(self) -> int:
+        # don't worry about this
         return len(self.images)
 
     def __getitem__(self, index):
 
+        # TODO: change so mask is [y1, y2] where the first are the masks from the first annotator,
+        # and the second are the masks from the second
+
         img = self.images[index]
-        label = self.masks[index]
+        label_1 = self.masks_1[index]
+        label_2 = self.masks_2[index]
         
         image = Image.open(img)
         image = image.convert("RGB")
 
-        mask = Image.open(label)
+        mask_1 = Image.open(label_1)
+        mask_2 = Image.open(label_2)
 
         img = self.transform(image)
-        mask = self.transform(mask)
+        mask_1 = self.transform(mask_1)
+        mask_2 = self.transform(mask_2)
         
         # makes mask into size [height, width] with respective class at each index
-        mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
+        def mask_to_2D(mask):
+            mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
+            return mask
+        
+        mask_1 = mask_to_2D(mask_1)
+        mask_2 = mask_to_2D(mask_2)
 
-        return img, mask
+        return img, [mask_1, mask_2]
     
 
 if __name__ == "__main__":

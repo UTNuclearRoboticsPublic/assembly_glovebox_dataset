@@ -54,7 +54,8 @@ class OneFormerLitModel(LitModel):
         inputs = self.processor(x, ["semantic"], return_tensors="pt")
         inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs)
-        loss = F.cross_entropy(raw_preds, y.long())
+        loss = self.get_loss(raw_preds, y)
+        # loss = F.cross_entropy(raw_preds, y.long())
         return loss, raw_preds.transformer_decoder_mask_predictions
 
 

@@ -72,7 +72,8 @@ class SamLitModel(LitModel):
 
         predicted_masks = raw_preds.pred_masks.squeeze(1) # result shape -> [1, 3, 256, 256]
 
-        loss = F.cross_entropy(predicted_masks, y.long())
+        loss = self.get_loss(predicted_masks, y)
+        # loss = F.cross_entropy(predicted_masks, y.long())
 
         # adjust 0 if this is not working
         return loss, predicted_masks[0]

@@ -43,7 +43,7 @@ class LitModel(pl.LightningModule):
         self.log_dict(
             {
                 "val_loss": loss,
-                "val_iou": self.iou(raw_preds, y.to(torch.int32))
+                "val_iou": self.get_avg_iou(raw_preds, y)
             },
             prog_bar=True
         )
@@ -55,18 +55,28 @@ class LitModel(pl.LightningModule):
 
             # predictions only on 0, 1 (most likely because we need more epochs) -> check that dim is correct, though
             self._make_grid(predictions, "val_preds")
+    
+    def get_avg_iou(self, raw_preds, y):
+        iou1 = self.iou(raw_preds, y[0].to(torch.int32))
+        iou2 = self.iou(raw_preds, y[1].to(torch.int32))
+        return (iou1+iou2) / 2
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         # is this working properly? barely any metric data.
         loss, raw_preds = self._common_set(batch, batch_idx)
 
+        def get_avg_ace(raw_preds, y):
+            ace1 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[0])
+            ace2 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[1])
+            return (ace1+ace2) / 2
+
         # automatically averages these values across the epoch
         self.log_dict(
             {
                 "test_loss": loss,
-                "test_iou": self.iou(raw_preds, y.to(torch.int32)),
-                "test_ace": adaptive_calibration_error(y_pred=raw_preds, y_true=y), # [4, 3, 161, 161] and [4, 161, 161]
+                "test_iou": self.get_avg_iou(raw_preds, y),
+                "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
                 "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True
@@ -84,11 +94,19 @@ class LitModel(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         return optimizer
-    
+
+    def get_loss(self, raw_preds, y):
+        y1, y2 = y
+        loss_1 = F.cross_entropy(raw_preds, y1.long())
+        loss_2 = F.cross_entropy(raw_preds, y2.long())
+        loss = (loss_1 + loss_2) / 2
+        return loss 
+
+
     def _common_set(self, batch, batch_idx):
         x, y = batch
         raw_preds = self.model(x)
-        loss = F.cross_entropy(raw_preds, y.long())
+        loss = self.get_loss(raw_preds, y)
         return loss, raw_preds
     
     # creates a grid of images and respective predictions in the validation set
