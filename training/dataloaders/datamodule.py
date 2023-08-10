@@ -3,13 +3,14 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADER
 from torch.utils.data import DataLoader, random_split
 import os
 
-from training.dataloaders.dataloader import AssemblyDataset
+from dataloaders.dataloader import AssemblyDataset
 
 
 class AssemblyDataModule(pl.LightningDataModule):
-    def __init__(self, fit_query, test_query):
+    def __init__(self, fit_query, test_query, batch_size):
         self.fit_query = fit_query
         self.test_query = test_query
+        self.batch_size = batch_size
         print(f"Initialized {fit_query} and {test_query}")
         super().__init__()
 
@@ -21,7 +22,7 @@ class AssemblyDataModule(pl.LightningDataModule):
             self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs)
 
         if stage=="fit":
-            path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.test_query)
+            path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.fit_query)
             train_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels=path_to_2_labels, path_to_images=path_to_imgs)
 
             train_set_size = int(len(train_set)*0.8)
@@ -31,16 +32,16 @@ class AssemblyDataModule(pl.LightningDataModule):
             valid_set_size])
 
     def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=4, shuffle=True, num_workers=0)
+        return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=0)
     
     def val_dataloader(self):
-        return DataLoader(self.valid_set, batch_size=4, shuffle=False, num_workers=0)
+        return DataLoader(self.valid_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
     def test_dataloader(self) -> EVAL_DATALOADERS:
-        return DataLoader(self.test_set, batch_size=4, shuffle=False, num_workers=0)
+        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
     
     def predict_dataloader(self):
-        return DataLoader(self.test_set, batch_size=4, shuffle=False, num_workers=0)
+        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
 
     def _get_files(self, query):
         # appending all directory paths in the test_query

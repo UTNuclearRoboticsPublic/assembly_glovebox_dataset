@@ -9,17 +9,18 @@ import torchvision
 import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
-from training.metrics import *
 
-from training.dataloaders.datamodule import AssemblyDataModule
-from training.models.UNET import UNET
+from metrics import *
+from dataloaders.datamodule import AssemblyDataModule
+from models.UNET import UNET
 
 
 class LitModel(pl.LightningModule):
-    def __init__(self, droprate=0):
+    def __init__(self, droprate=0, learning_rate=0.001):
         super(LitModel, self).__init__()
         self.model = UNET(in_channels=3, out_channels=3, droprate=0)
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
+        self.learning_rate = learning_rate
 
         #only use hyperparameters if you need it for instantiating the model
         # otherwise, use it from the CLI only for simplicity
@@ -92,7 +93,7 @@ class LitModel(pl.LightningModule):
         return preds
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def get_loss(self, raw_preds, y):

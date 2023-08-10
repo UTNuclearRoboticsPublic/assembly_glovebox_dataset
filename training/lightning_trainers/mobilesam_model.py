@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 from lightning.pytorch import loggers as pl_loggers
 import torchmetrics
-from training.metrics import *
 import numpy as np
 import torch
 import torch
@@ -16,15 +15,15 @@ import cv2
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 from mobile_sam.utils.transforms import ResizeLongestSide
 
-
-from training.dataloaders.datamodule import AssemblyDataModule
-from training.models.UNET import UNET
-from training.lightning_trainers.lightning_model import LitModel
+from metrics import *
+from dataloaders.datamodule import AssemblyDataModule
+from models.UNET import UNET
+from lightning_trainers.lightning_model import LitModel
 
 ### ADJUST THE DECODER CODE WHEN PIP INSTALLING
 
 class MobileSamLitModel(LitModel):
-    def __init__(self):
+    def __init__(self, learning_rate=0.001):
         super(MobileSamLitModel, self).__init__()
         
         model_type = "vit_t"
@@ -33,6 +32,9 @@ class MobileSamLitModel(LitModel):
         self.model = sam_model_registry[model_type](checkpoint=sam_checkpoint)
 
         self.resize_transform = ResizeLongestSide(self.model.image_encoder.img_size)
+
+        self.learning_rate = learning_rate
+
 
 
         # freezing the encoder of the model

@@ -8,7 +8,8 @@ import os
 import matplotlib.pyplot as plt
 
 transform = transforms.Compose ([
-    transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
+    # transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
+    transforms.Resize(size=(1000, 1000), interpolation=PIL.Image.NEAREST),
     transforms.ToTensor()
 ])
 
@@ -25,8 +26,6 @@ class AssemblyDataset(Dataset):
         self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path) if file.endswith('.png')]
         self.masks_1 = [os.path.join(path, file) for path in path_to_1_labels for file in os.listdir(path)]
         self.masks_2 = [os.path.join(path, file) for path in path_to_2_labels for file in os.listdir(path)]
-
-
 
     def __len__(self) -> int:
         # don't worry about this

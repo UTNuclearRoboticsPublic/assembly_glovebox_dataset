@@ -3,12 +3,12 @@ import torch
 import torch.nn.functional as F
 from lightning.pytorch import loggers as pl_loggers
 import torchmetrics
-from training.metrics import *
 import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
-from training.dataloaders.datamodule import AssemblyDataModule
-from training.lightning_trainers.lightning_model import LitModel
+from metrics import *
+from dataloaders.datamodule import AssemblyDataModule
+from lightning_trainers.lightning_model import LitModel
 
 
 class OneFormerLitModel(LitModel):
@@ -18,7 +18,7 @@ class OneFormerLitModel(LitModel):
     This inherits some methods from the LitModel class.
     """
 
-    def __init__(self, droprate=0):
+    def __init__(self, learning_rate=0.001):
         super(OneFormerLitModel, self).__init__()
 
         id2label = {
@@ -32,6 +32,9 @@ class OneFormerLitModel(LitModel):
         self.processor = OneFormerProcessor.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny",metadata=id2label, num_labels=3, class_names=["background", "left_hand", "right_hand"], do_reduce_labels=True,
                                                                 size=644, ignore_mismatched_sizes=True) 
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
+
+        self.learning_rate = learning_rate
+
 
 
     def predict_step(self, batch, batch_idx):

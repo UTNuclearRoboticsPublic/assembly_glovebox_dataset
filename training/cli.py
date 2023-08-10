@@ -6,12 +6,15 @@ from lightning_trainers.mobilesam_model import MobileSamLitModel
 from dataloaders.datamodule import AssemblyDataModule
 from lightning.pytorch.cli import LightningCLI
 
+import lightning.pytorch as pl
+
+
 ## call - python cli.py fit --config config.yml
 ## adjust for which directory the config file has been placed in
 
 def cli_main():
     # cli = LightningCLI(LitModel, AssemblyDataModule)
-    cli = LightningCLI(AssemblyDataModule)
+    cli = LightningCLI(LitModel, AssemblyDataModule)
 
 
 if __name__ == '__main__':

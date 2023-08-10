@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 from lightning.pytorch import loggers as pl_loggers
 import torchmetrics
-from training.metrics import *
 import numpy as np
 import torch
 import torch
@@ -13,12 +12,13 @@ from statistics import mean
 from PIL import Image
 from transformers import SamMaskDecoderConfig, SamProcessor, SamModel
 
-from training.dataloaders.datamodule import AssemblyDataModule
-from training.models.UNET import UNET
-from training.lightning_trainers.lightning_model import LitModel
+from metrics import *
+from dataloaders.datamodule import AssemblyDataModule
+from models.UNET import UNET
+from lightning_trainers.lightning_model import LitModel
 
 class SamLitModel(LitModel):
-    def __init__(self):
+    def __init__(self, learning_rate=0.001):
         super(SamLitModel, self).__init__()
 
 
@@ -33,6 +33,8 @@ class SamLitModel(LitModel):
                 param.requires_grad_(False)
 
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
+        self.learning_rate = learning_rate
+
 
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint/checking predictions
