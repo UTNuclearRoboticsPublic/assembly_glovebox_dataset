@@ -1,8 +1,9 @@
 seed_everything: true
 model:
-  # class_path: training.lightning_trainers.lightning_model.LitModel
-  droprate: 0
-  learning_rate: 0.001
+  class_path: training.lightning_trainers.lightning_model.LitModel
+  init_args:
+    droprate: 0
+    learning_rate: 0.001
 trainer:
   accelerator: "gpu"
   strategy: auto

@@ -3,7 +3,7 @@ from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADER
 from torch.utils.data import DataLoader, random_split
 import os
 
-from dataloaders.dataloader import AssemblyDataset
+from training.dataloaders.dataloader import AssemblyDataset
 
 
 class AssemblyDataModule(pl.LightningDataModule):

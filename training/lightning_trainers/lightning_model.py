@@ -10,9 +10,8 @@ import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
 
-from metrics import *
-from dataloaders.datamodule import AssemblyDataModule
-from models.UNET import UNET
+from ..metrics import *
+from ..models.UNET import UNET
 
 
 class LitModel(pl.LightningModule):

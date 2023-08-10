@@ -6,9 +6,9 @@ import torchmetrics
 import numpy as np
 from transformers import OneFormerProcessor, OneFormerModel, TrainingArguments, Trainer, OneFormerForUniversalSegmentation
 
-from metrics import *
-from dataloaders.datamodule import AssemblyDataModule
-from lightning_trainers.lightning_model import LitModel
+from ..metrics import *
+from ..dataloaders.datamodule import AssemblyDataModule
+from training.lightning_trainers.lightning_model import LitModel
 
 
 class OneFormerLitModel(LitModel):

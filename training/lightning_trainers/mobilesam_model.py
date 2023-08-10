@@ -15,10 +15,10 @@ import cv2
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 from mobile_sam.utils.transforms import ResizeLongestSide
 
-from metrics import *
-from dataloaders.datamodule import AssemblyDataModule
-from models.UNET import UNET
-from lightning_trainers.lightning_model import LitModel
+from ..metrics import *
+from ..dataloaders.datamodule import AssemblyDataModule
+from ..models.UNET import UNET
+from training.lightning_trainers.lightning_model import LitModel
 
 ### ADJUST THE DECODER CODE WHEN PIP INSTALLING
 

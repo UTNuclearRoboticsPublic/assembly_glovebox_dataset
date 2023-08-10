@@ -12,10 +12,10 @@ from statistics import mean
 from PIL import Image
 from transformers import SamMaskDecoderConfig, SamProcessor, SamModel
 
-from metrics import *
-from dataloaders.datamodule import AssemblyDataModule
-from models.UNET import UNET
-from lightning_trainers.lightning_model import LitModel
+from ..metrics import *
+from ..dataloaders.datamodule import AssemblyDataModule
+from ..models.UNET import UNET
+from .lightning_model import LitModel
 
 class SamLitModel(LitModel):
     def __init__(self, learning_rate=0.001):

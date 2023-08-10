@@ -1,9 +1,9 @@
-from lightning_trainers.lightning_model import LitModel
-from lightning_trainers.oneformer_model import OneFormerLitModel
-from lightning_trainers.sam_model import SamLitModel
-from lightning_trainers.mobilesam_model import MobileSamLitModel
+from training.lightning_trainers.lightning_model import LitModel
+from training.lightning_trainers.oneformer_model import OneFormerLitModel
+from training.lightning_trainers.sam_model import SamLitModel
+from training.lightning_trainers.mobilesam_model import MobileSamLitModel
 
-from dataloaders.datamodule import AssemblyDataModule
+from training.dataloaders.datamodule import AssemblyDataModule
 from lightning.pytorch.cli import LightningCLI
 
 import lightning.pytorch as pl
@@ -14,7 +14,7 @@ import lightning.pytorch as pl
 
 def cli_main():
     # cli = LightningCLI(LitModel, AssemblyDataModule)
-    cli = LightningCLI(LitModel, AssemblyDataModule)
+    cli = LightningCLI(datamodule_class=AssemblyDataModule)
 
 
 if __name__ == '__main__':
