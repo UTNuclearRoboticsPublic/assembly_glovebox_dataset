@@ -81,14 +81,7 @@ class MobileSamLitModel(LitModel):
             rep_boxes = input_boxes.repeat(x.shape[0], 1, 1) # shape of each box -> 0, 0, 768, 768
 
             sparse_embeddings, dense_embeddings = self.get_embeds(self.model, x, input_boxes = rep_boxes)
-        print(
-            f"image_embed {pixel_values.shape}",
-            f"pe {self.model.prompt_encoder.get_dense_pe().shape}",
-            f"sparse {sparse_embeddings.shape}",
-            f"dense {dense_embeddings.shape}",
-            f"x {x.shape}",
 
-        )
         raw_preds = self.get_prediction(
                             model=self.model,
                             input_image=input_image,

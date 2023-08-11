@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 transform = transforms.Compose ([
     # transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
-    transforms.Resize(size=(1000, 1000), interpolation=PIL.Image.NEAREST),
+    transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
     transforms.ToTensor()
 ])
 

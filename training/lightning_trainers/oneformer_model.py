@@ -27,10 +27,24 @@ class OneFormerLitModel(LitModel):
             2: "right_hand"
         }
 
-        self.model = OneFormerForUniversalSegmentation.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny", id2label=id2label, label2id = {v: k for k, v in id2label.items()},
-                                                          num_classes=3, ignore_mismatched_sizes=True, num_queries=3)
-        self.processor = OneFormerProcessor.from_pretrained("shi-labs/oneformer_ade20k_swin_tiny",metadata=id2label, num_labels=3, class_names=["background", "left_hand", "right_hand"], do_reduce_labels=True,
-                                                                size=644, ignore_mismatched_sizes=True) 
+        self.model = OneFormerForUniversalSegmentation.from_pretrained(
+                                                                    "shi-labs/oneformer_ade20k_swin_tiny", 
+                                                                    id2label=id2label, 
+                                                                    label2id = {v: k for k, v in id2label.items()},
+                                                                    num_classes=3, 
+                                                                    ignore_mismatched_sizes=True, 
+                                                                    num_queries=3
+                                                                        )
+        
+        self.processor = OneFormerProcessor.from_pretrained(
+                                                            "shi-labs/oneformer_ade20k_swin_tiny",
+                                                            metadata=id2label, 
+                                                            num_labels=3, 
+                                                            class_names=["background", "left_hand", "right_hand"], 
+                                                            do_reduce_labels=True,
+                                                            size=644, # this MUST be the size of the image * 4
+                                                            ignore_mismatched_sizes=True) 
+        
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
         self.learning_rate = learning_rate
@@ -54,10 +68,10 @@ class OneFormerLitModel(LitModel):
     
     def _common_set(self, batch, batch_idx):
         x, y = batch
-        inputs = self.processor(x, ["semantic"], return_tensors="pt")
+        inputs = self.processor(images=x, task_inputs=["semantic" for _ in range(x.shape[0])], return_tensors="pt")
         inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs)
-        loss = self.get_loss(raw_preds, y)
+        loss = self.get_loss(raw_preds.transformer_decoder_mask_predictions, y)
         # loss = F.cross_entropy(raw_preds, y.long())
         return loss, raw_preds.transformer_decoder_mask_predictions
 
