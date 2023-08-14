@@ -21,6 +21,7 @@ from ..models.UNET import UNET
 from training.lightning_trainers.lightning_model import LitModel
 
 ### ADJUST THE DECODER CODE WHEN PIP INSTALLING
+### ADD MSE LOSS INSTEAD
 
 class MobileSamLitModel(LitModel):
     def __init__(self, learning_rate=0.001):

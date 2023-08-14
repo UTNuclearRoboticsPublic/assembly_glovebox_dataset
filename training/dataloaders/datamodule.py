@@ -25,7 +25,7 @@ class AssemblyDataModule(pl.LightningDataModule):
             path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.fit_query)
             train_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels=path_to_2_labels, path_to_images=path_to_imgs)
 
-            train_set_size = int(len(train_set)*0.8)
+            train_set_size = int(len(train_set)*0.89) # left with ~ 80/10/10 split (left one participant for the test set ID)
             valid_set_size = len(train_set) - train_set_size
 
             self.train_set, self.valid_set = random_split(train_set, [train_set_size, 

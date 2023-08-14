@@ -18,7 +18,7 @@ class OneFormerLitModel(LitModel):
     This inherits some methods from the LitModel class.
     """
 
-    def __init__(self, learning_rate=0.001):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1):
         super(OneFormerLitModel, self).__init__()
 
         id2label = {
@@ -26,6 +26,7 @@ class OneFormerLitModel(LitModel):
             1: "left_hand",
             2: "right_hand"
         }
+        
 
         self.model = OneFormerForUniversalSegmentation.from_pretrained(
                                                                     "shi-labs/oneformer_ade20k_swin_tiny", 
@@ -49,6 +50,8 @@ class OneFormerLitModel(LitModel):
 
         self.learning_rate = learning_rate
 
+        self.weight_decay = weight_decay
+
 
 
     def predict_step(self, batch, batch_idx):
@@ -63,7 +66,8 @@ class OneFormerLitModel(LitModel):
         return preds
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=0.001, weight_decay=self.weight_decay)
+        scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
         return optimizer
     
     def _common_set(self, batch, batch_idx):
@@ -72,8 +76,31 @@ class OneFormerLitModel(LitModel):
         inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs)
         loss = self.get_loss(raw_preds.transformer_decoder_mask_predictions, y)
+        
+
+
         # loss = F.cross_entropy(raw_preds, y.long())
         return loss, raw_preds.transformer_decoder_mask_predictions
+    
+    
+    def get_loss(self, raw_preds, y):
+        losses = []
+
+
+        for target in y:
+            ground = torch.nn.functional.one_hot(target.long(), num_classes=3)
+            ground_truth = ground.permute(0,-1, 1, 2)
+            loss = OneFormerForUniversalSegmentation.get_loss_dict(
+                masks_queries_logits=raw_preds.masks_queries_logits,
+                class_queries_logits=raw_preds.class_queries_logits,
+                class_labels=[torch.tensor([0, 1, 2]) for i in range(ground.shape[0])],
+                mask_labels = [ground_truth[i] for i in range(target.shape[0])],
+                contrastive_queries_logits=raw_preds.transformer_decoder_contrastive_queries,
+                auxilary_predictions= raw_preds.transformer_decoder_auxiliary_predictions,
+                calculate_contrastive_loss= self.model.config.contrastive_temperature is not None
+            )
+            loss = sum(loss)
+            losses.append(loss)
 
 
 
