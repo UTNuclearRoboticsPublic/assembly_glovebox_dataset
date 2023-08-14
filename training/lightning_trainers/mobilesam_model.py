@@ -24,7 +24,7 @@ from training.lightning_trainers.lightning_model import LitModel
 ### ADD MSE LOSS INSTEAD
 
 class MobileSamLitModel(LitModel):
-    def __init__(self, learning_rate=0.001):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1):
         super(MobileSamLitModel, self).__init__()
         
         model_type = "vit_t"
@@ -35,6 +35,7 @@ class MobileSamLitModel(LitModel):
         self.resize_transform = ResizeLongestSide(self.model.image_encoder.img_size)
 
         self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
 
 
 
@@ -67,7 +68,7 @@ class MobileSamLitModel(LitModel):
         return preds
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.mask_decoder.parameters(), lr=0.001)
+        optimizer = torch.optim.AdamW(self.model.mask_decoder.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         return optimizer
     
     def _common_set(self, batch, batch_idx):
@@ -95,8 +96,26 @@ class MobileSamLitModel(LitModel):
         loss = self.get_loss(raw_preds, y)
         # loss = F.cross_entropy(raw_preds, y.long())
 
+        print(f'the loss is {loss.dtype} and {loss}')
+
         # adjust 0 if this is not working
         return loss, raw_preds
+    
+    def get_loss(self, raw_preds, y):
+        y1, y2 = y
+        # loss_1 = F.cross_entropy(raw_preds, y1.long())
+        # loss_2 = F.cross_entropy(raw_preds, y2.long())
+        y1 = torch.nn.functional.one_hot(y1.long(), num_classes=3)
+        y1 = y1.permute(0,-1, 1, 2)
+        y2 = torch.nn.functional.one_hot(y2.long(), num_classes=3)
+        y2 = y2.permute(0,-1, 1, 2)
+
+
+        loss_1 = F.mse_loss(raw_preds, y1.float()) # error bc this wasn't float earlier
+        loss_2 = F.mse_loss(raw_preds, y2.float())
+        loss = (loss_1 + loss_2) / 2
+        
+        return loss
 
     def prepare_image(self, image, transform, device):
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

@@ -43,7 +43,8 @@ class OneFormerLitModel(LitModel):
                                                             num_labels=3, 
                                                             class_names=["background", "left_hand", "right_hand"], 
                                                             do_reduce_labels=True,
-                                                            size=644, # this MUST be the size of the image * 4
+                                                            size= (512 * 4, 512 * 4), # this MUST be the size of the image * 4
+                                                            # do_resize=False,
                                                             ignore_mismatched_sizes=True) 
         
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
@@ -66,7 +67,7 @@ class OneFormerLitModel(LitModel):
         return preds
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=0.001, weight_decay=self.weight_decay)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
         return optimizer
     
@@ -75,7 +76,7 @@ class OneFormerLitModel(LitModel):
         inputs = self.processor(images=x, task_inputs=["semantic" for _ in range(x.shape[0])], return_tensors="pt")
         inputs = inputs.to("cuda")
         raw_preds = self.model(**inputs)
-        loss = self.get_loss(raw_preds.transformer_decoder_mask_predictions, y)
+        loss = self.get_loss(raw_preds, y)
         
 
 
@@ -90,17 +91,19 @@ class OneFormerLitModel(LitModel):
         for target in y:
             ground = torch.nn.functional.one_hot(target.long(), num_classes=3)
             ground_truth = ground.permute(0,-1, 1, 2)
-            loss = OneFormerForUniversalSegmentation.get_loss_dict(
+            loss_dict = self.model.get_loss_dict(
                 masks_queries_logits=raw_preds.masks_queries_logits,
                 class_queries_logits=raw_preds.class_queries_logits,
-                class_labels=[torch.tensor([0, 1, 2]) for i in range(ground.shape[0])],
-                mask_labels = [ground_truth[i] for i in range(target.shape[0])],
                 contrastive_queries_logits=raw_preds.transformer_decoder_contrastive_queries,
-                auxilary_predictions= raw_preds.transformer_decoder_auxiliary_predictions,
-                calculate_contrastive_loss= self.model.config.contrastive_temperature is not None
+                mask_labels = [ground_truth[i].to(torch.float32) for i in range(target.shape[0])],
+                class_labels=[torch.tensor([0, 1, 2]).to(device="cuda") for i in range(ground.shape[0])], # had to remove .to(device)
+                text_queries = raw_preds.text_queries,
+                auxiliary_predictions= raw_preds.transformer_decoder_auxiliary_predictions,
+                calculate_contrastive_loss= False
             )
-            loss = sum(loss)
+            loss = self.model.get_loss(loss_dict)
             losses.append(loss)
+        return sum(losses)  / 2
 
 
 

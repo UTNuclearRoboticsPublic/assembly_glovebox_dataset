@@ -7,10 +7,11 @@ from training.dataloaders.dataloader import AssemblyDataset
 
 
 class AssemblyDataModule(pl.LightningDataModule):
-    def __init__(self, fit_query, test_query, batch_size):
+    def __init__(self, fit_query, test_query, batch_size, img_size):
         self.fit_query = fit_query
         self.test_query = test_query
         self.batch_size = batch_size
+        self.img_size = img_size
         print(f"Initialized {fit_query} and {test_query}")
         super().__init__()
 
@@ -19,11 +20,11 @@ class AssemblyDataModule(pl.LightningDataModule):
 
         if stage=="test" or stage=="predict":
             path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.test_query)
-            self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs)
+            self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size)
 
         if stage=="fit":
             path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.fit_query)
-            train_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels=path_to_2_labels, path_to_images=path_to_imgs)
+            train_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels=path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size)
 
             train_set_size = int(len(train_set)*0.89) # left with ~ 80/10/10 split (left one participant for the test set ID)
             valid_set_size = len(train_set) - train_set_size

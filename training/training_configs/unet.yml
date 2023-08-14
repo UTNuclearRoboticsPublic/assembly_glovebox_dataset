@@ -79,4 +79,5 @@ data:
       - Top_View
       - Side_View
   batch_size: 32
+  img_size: 161
 ckpt_path: null

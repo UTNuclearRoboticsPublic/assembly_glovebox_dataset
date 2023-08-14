@@ -7,15 +7,11 @@ import PIL
 import os
 import matplotlib.pyplot as plt
 
-transform = transforms.Compose ([
-    # transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
-    transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
-    transforms.ToTensor()
-])
 
 class AssemblyDataset(Dataset):
-    def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels):
-        self.transform = transform
+    def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size):
+
+        self.transform = self.get_transform(img_size)
         self.path_to_images = path_to_images
 
         # TODO: set two paths to make two self.masks so that there is one for each annotator
@@ -60,6 +56,14 @@ class AssemblyDataset(Dataset):
 
         return img, [mask_1, mask_2]
     
+    def get_transform(self, img_size):
+        transform = transforms.Compose ([
+            # transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
+            transforms.Resize(size=(img_size, img_size), interpolation=PIL.Image.NEAREST),
+            transforms.ToTensor()
+        ])
+        return transform
+
 
 if __name__ == "__main__":
     # test the loader with the below

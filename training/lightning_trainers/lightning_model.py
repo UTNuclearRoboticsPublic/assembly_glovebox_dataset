@@ -57,6 +57,8 @@ class LitModel(pl.LightningModule):
             self._make_grid(predictions, "val_preds")
     
     def get_avg_iou(self, raw_preds, y):
+        print(f"the shape of raw_preds is {raw_preds.shape}")
+        print(f"the shape of y[0] is {y[0].shape}")
         iou1 = self.iou(raw_preds, y[0].to(torch.int32))
         iou2 = self.iou(raw_preds, y[1].to(torch.int32))
         return (iou1+iou2) / 2
