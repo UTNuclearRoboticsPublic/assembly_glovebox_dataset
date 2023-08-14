@@ -3,10 +3,8 @@ from PIL import Image
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import glob
 import json
 import fnmatch
-import shutil
 
 def parse_json(path_to_json):
     with open(path_to_json) as json_file:
@@ -14,13 +12,23 @@ def parse_json(path_to_json):
     # declare tuple with image name and id
     matches = []
     all_annotators = []
+    prev_width = None
+    prev_height = None
     for obj in data:
         # save the annotator ID and what their unique numbers are
         image_name = obj["image"].split("-")[-1]
         image_id = int(obj['id'])
         annotator = int(obj['annotator'])
-        orig_width = int(obj['tag'][0]['original_width'])
-        orig_height = int(obj['tag'][0]['original_height'])
+        try:
+            orig_width = int(obj['tag'][0]['original_width'])
+            orig_height = int(obj['tag'][0]['original_height'])
+
+            prev_width, prev_height = orig_width, orig_height
+        except:
+            orig_width = prev_width
+            orig_height = prev_height
+            print(f"exception for {image_name} with {image_id} for annotator {annotator} for {path_to_json}")
+
         all_annotators.append(annotator)
         matches.append((image_name, image_id, annotator, orig_width, orig_height))
     unique_annotators = list(set(all_annotators)) # this is to only find unique annotators
@@ -28,7 +36,7 @@ def parse_json(path_to_json):
 
 def convert(path_to_images, path_to_labels, path_to_json, participant_number):
     labels = os.listdir(path_to_labels) # binary ground truth
-    images = os.listdir(path_to_images)  # raw images (not the ground truth)
+    # images = os.listdir(path_to_images)  # raw images (not the ground truth)
     image = Image.open(f"{path_to_labels}/{labels[1]}") # why the second index? probs cause used for height and width
     height = np.asarray(image).shape[0]
     width = np.asarray(image).shape[1]
@@ -94,14 +102,14 @@ def convert(path_to_images, path_to_labels, path_to_json, participant_number):
             # if so, find which class was overlapped with and fix it
             final_indexes = np.where(final_arr == 3)
             if np.array_equal(np.unique(final_indexes), np.unique(indexes_mask)):
-                print("here was a match")
+                print(f"here was a match {image_name}, {image_id}, {annotator}, {task}")
                 final_arr[final_arr==3] = current_val
             elif np.array_equal(np.unique(final_indexes), np.unique(prev_indexes)):
-                print("here2 was a match")
+                print(f"here2 was a match {image_name}, {image_id}, {annotator}, {task}")
                 final_arr[final_arr==3] = prev_val
             # else set it to the background class so it will be apparent when checking for errors
             else:
-                print("Correct class for overlapping label not found.")
+                # print("Correct class for overlapping label not found.")
                 final_arr[final_arr==3] = 0
             
             prev_indexes = indexes_mask
@@ -128,8 +136,8 @@ def convert(path_to_images, path_to_labels, path_to_json, participant_number):
             image.save(f"./Labels/Test_Subject_{participant_number}/By_{num_save}/{dis}/{task}/{view}/{image_name}")
             # image.save(f"./Labels/{image_name}.png")
         
-    plt.imshow(final_arr)
-    plt.show()
+    # plt.imshow(final_arr)
+    # plt.show()
 
 def get_json_directory_paths(project_number):
     pattern = f'project-{project_number}*.json'
@@ -166,13 +174,13 @@ if __name__ == "__main__":
 
     'Edit the following to the project numbers that match before converting--'
     proj_num_to_type = {
-        ("ood", "Top_View"): 33,
-        ("ood", "Side_View"): 34,
-        ("id", "Top_View") : 31,
-        ("id", "Side_View") : 32
+        ("ood", "Top_View"): 51,
+        ("ood", "Side_View"): 52,
+        ("id", "Top_View") : 49,
+        ("id", "Side_View") : 50
     }
     
-    participant_number = 3
+    participant_number = 12
 
     # edit the images path
     # do all the conversions at once
