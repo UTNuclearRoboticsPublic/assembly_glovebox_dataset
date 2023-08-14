@@ -77,9 +77,10 @@ class MobileSamLitModel(LitModel):
 
         with torch.no_grad():
             
-            input_image, pixel_values = self.prepare_image(x, self.resize_transform, device="cuda")
+            input_image, pixel_values = self.prepare_image(x, self.resize_transform)
 
-            input_boxes = torch.from_numpy(np.array([[0, 0, x.shape[2], x.shape[3]]])).float().to(device="cuda")
+            input_boxes = torch.from_numpy(np.array([[0, 0, x.shape[2], x.shape[3]]])).float()
+            input_boxes = input_boxes.to(self.device)
             rep_boxes = input_boxes.repeat(x.shape[0], 1, 1) # shape of each box -> 0, 0, 768, 768
 
             sparse_embeddings, dense_embeddings = self.get_embeds(self.model, x, input_boxes = rep_boxes)
@@ -96,7 +97,6 @@ class MobileSamLitModel(LitModel):
         loss = self.get_loss(raw_preds, y)
         # loss = F.cross_entropy(raw_preds, y.long())
 
-        print(f'the loss is {loss.dtype} and {loss}')
 
         # adjust 0 if this is not working
         return loss, raw_preds
@@ -117,10 +117,9 @@ class MobileSamLitModel(LitModel):
         
         return loss
 
-    def prepare_image(self, image, transform, device):
+    def prepare_image(self, image, transform):
         # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         resized_img_tensor = transform.apply_image_torch(image)
-        # image = torch.as_tensor(image, device=device)
         # resize_img_tensor = image.permute(2, 0, 1).contiguous()
         # resize_img_tensor = image.permute(2, 0, 1)
         input_image = self.model.preprocess(resized_img_tensor) # (B, 3, 1024, 1024)

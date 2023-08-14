@@ -6,7 +6,7 @@ model:
     weight_decay: 0.1
 trainer:
   accelerator: "gpu"
-  strategy: auto
+  strategy: 'ddp_find_unused_parameters_true'
   devices: auto
   num_nodes: 1
   precision: 32-true

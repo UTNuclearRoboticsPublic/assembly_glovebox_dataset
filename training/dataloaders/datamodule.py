@@ -33,16 +33,16 @@ class AssemblyDataModule(pl.LightningDataModule):
             valid_set_size])
 
     def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=0)
+        return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=128, pin_memory=True)
     
     def val_dataloader(self):
-        return DataLoader(self.valid_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        return DataLoader(self.valid_set, batch_size=self.batch_size, shuffle=False, num_workers=128, pin_memory=True)
     
     def test_dataloader(self) -> EVAL_DATALOADERS:
-        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=128, pin_memory=True)
     
     def predict_dataloader(self):
-        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=0)
+        return DataLoader(self.test_set, batch_size=self.batch_size, shuffle=False, num_workers=128, pin_memory=True)
 
     def _get_files(self, query):
         # appending all directory paths in the test_query

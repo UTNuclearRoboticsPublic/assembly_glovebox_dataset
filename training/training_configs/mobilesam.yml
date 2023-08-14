@@ -5,7 +5,7 @@ model:
     learning_rate: 0.0008
 trainer:
   accelerator: "gpu"
-  strategy: auto
+  strategy: 'ddp_find_unused_parameters_true'
   devices: auto
   num_nodes: 1
   precision: 32-true

@@ -30,7 +30,7 @@ class LitModel(pl.LightningModule):
         loss, raw_preds= self._common_set(batch, batch_idx)
 
         # defualt on epoch=False, which is why it was not showing earlier
-        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True)
+        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
         # why was no training loss recorded?
         # what is hp metric
@@ -45,7 +45,8 @@ class LitModel(pl.LightningModule):
                 "val_loss": loss,
                 "val_iou": self.get_avg_iou(raw_preds, y)
             },
-            prog_bar=True
+            prog_bar=True,
+            sync_dist=True
         )
 
         # for every two batches
@@ -57,8 +58,7 @@ class LitModel(pl.LightningModule):
             self._make_grid(predictions, "val_preds")
     
     def get_avg_iou(self, raw_preds, y):
-        print(f"the shape of raw_preds is {raw_preds.shape}")
-        print(f"the shape of y[0] is {y[0].shape}")
+
         iou1 = self.iou(raw_preds, y[0].to(torch.int32))
         iou2 = self.iou(raw_preds, y[1].to(torch.int32))
         return (iou1+iou2) / 2
@@ -81,7 +81,8 @@ class LitModel(pl.LightningModule):
                 "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
                 "test_entropy": predictive_entropy(raw_preds)
             },
-            prog_bar=True
+            prog_bar=True,
+            sync_dist=True
         )
 
     def predict_step(self, batch, batch_idx):

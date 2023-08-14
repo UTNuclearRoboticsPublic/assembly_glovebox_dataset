@@ -96,7 +96,7 @@ class OneFormerLitModel(LitModel):
                 class_queries_logits=raw_preds.class_queries_logits,
                 contrastive_queries_logits=raw_preds.transformer_decoder_contrastive_queries,
                 mask_labels = [ground_truth[i].to(torch.float32) for i in range(target.shape[0])],
-                class_labels=[torch.tensor([0, 1, 2]).to(device="cuda") for i in range(ground.shape[0])], # had to remove .to(device)
+                class_labels=[torch.tensor([0, 1, 2]).to(self.device) for i in range(ground.shape[0])], # had to remove .to(device)
                 text_queries = raw_preds.text_queries,
                 auxiliary_predictions= raw_preds.transformer_decoder_auxiliary_predictions,
                 calculate_contrastive_loss= False
