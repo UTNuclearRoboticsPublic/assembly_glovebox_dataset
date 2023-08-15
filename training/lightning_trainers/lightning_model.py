@@ -1,11 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import random_split
-from argparse import ArgumentParser
-import os
 import lightning.pytorch as pl
-import torchvision
 import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
@@ -109,8 +105,10 @@ class LitModel(pl.LightningModule):
     def _common_set(self, batch, batch_idx):
         x, y = batch
         raw_preds = self.model(x)
+        print(f"shape of input x is {x.shape}")
         loss = self.get_loss(raw_preds, y)
         return loss, raw_preds
+
     
     # creates a grid of images and respective predictions in the validation set
     def _make_grid(self, values, name):
