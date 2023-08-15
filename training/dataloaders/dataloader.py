@@ -1,12 +1,11 @@
 from torch.utils.data import Dataset, DataLoader
 import torch
-from torchvision import transforms
+import torchvision.transforms.v2 as transforms
 import numpy as np
 from PIL import Image
 import PIL
 import os
 import matplotlib.pyplot as plt
-
 
 class AssemblyDataset(Dataset):
     def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size):
@@ -42,9 +41,24 @@ class AssemblyDataset(Dataset):
         mask_1 = Image.open(label_1)
         mask_2 = Image.open(label_2)
 
-        img = self.transform(image)
-        mask_1 = self.transform(mask_1)
-        mask_2 = self.transform(mask_2)
+        # transform_input = {
+        #     "image": image,
+        #     "mask_1": mask_1,
+        #     "mask_2": mask_2
+        # }
+
+        # output = self.transform(transform_input)
+
+        # print(f"the output is {output}")
+
+        jitter = transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5)
+        image = jitter(image)
+
+        img, mask_1, mask_2 = self.transform(image, mask_1, mask_2)
+
+        # img = self.transform(image)
+        # mask_1 = self.transform(mask_1)
+        # mask_2 = self.transform(mask_2)
         
         # makes mask into size [height, width] with respective class at each index
         def mask_to_2D(mask):
@@ -58,8 +72,8 @@ class AssemblyDataset(Dataset):
     
     def get_transform(self, img_size):
         transform = transforms.Compose ([
-            # transforms.Resize(size=(161, 161), interpolation=PIL.Image.NEAREST),
             transforms.Resize(size=(img_size, img_size), interpolation=PIL.Image.NEAREST),
+            transforms.RandomVerticalFlip(p=0.5),
             transforms.ToTensor()
         ])
         return transform
