@@ -58,6 +58,8 @@ data:
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
+      - Test_Subject_11
+      - Test_Subject_11
       - Test_Subject_12
     distribution:
       - id
@@ -75,6 +77,7 @@ data:
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
+      - Test_Subject_11
       - Test_Subject_12
     distribution:
       - ood
