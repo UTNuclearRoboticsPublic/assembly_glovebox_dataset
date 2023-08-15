@@ -43,7 +43,7 @@ class OneFormerLitModel(LitModel):
                                                             num_labels=3, 
                                                             class_names=["background", "left_hand", "right_hand"], 
                                                             do_reduce_labels=True,
-                                                            size= (512 * 4, 512 * 4), # this MUST be the size of the image * 4
+                                                            size= (161 * 4, 161 * 4), # this MUST be the size of the image * 4
                                                             # do_resize=False,
                                                             ignore_mismatched_sizes=True) 
         

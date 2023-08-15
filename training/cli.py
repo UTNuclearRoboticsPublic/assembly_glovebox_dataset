@@ -5,6 +5,7 @@ from training.lightning_trainers.mobilesam_model import MobileSamLitModel
 
 from training.dataloaders.datamodule import AssemblyDataModule
 from lightning.pytorch.cli import LightningCLI
+from lightning.pytorch.callbacks import EarlyStopping
 
 import lightning.pytorch as pl
 
