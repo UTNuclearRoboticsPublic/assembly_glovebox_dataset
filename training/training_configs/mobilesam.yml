@@ -4,6 +4,11 @@ model:
   init_args:
     learning_rate: 0.0008
 trainer:
+  callbacks: 
+      - class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping
+        init_args:
+          monitor: "val_loss"
+          patience: 5
   accelerator: "gpu"
   strategy: 'ddp_find_unused_parameters_true'
   devices: auto
