@@ -12,7 +12,7 @@ class AssemblyDataModule(pl.LightningDataModule):
         self.test_query = test_query
         self.batch_size = batch_size
         self.img_size = img_size
-        print(f"Initialized {fit_query} and {test_query}")
+        # print(f"Initialized {fit_query} and {test_query}")
         super().__init__()
 
     def setup(self, stage: str):

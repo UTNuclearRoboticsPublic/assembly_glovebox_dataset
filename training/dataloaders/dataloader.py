@@ -1,6 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
 import torch
-import torchvision.transforms.v2 as transforms
 import numpy as np
 from PIL import Image
 import PIL
@@ -43,7 +42,11 @@ class AssemblyDataset(Dataset):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         mask_1 = cv2.imread(label_1)
+        mask_1 = cv2.cvtColor(mask_1, cv2.COLOR_BGR2RGB)
+
         mask_2 = cv2.imread(label_2)
+        mask_2 = cv2.cvtColor(mask_2, cv2.COLOR_BGR2RGB)
+
 
         # transform_input = {
         #     "image": image,
@@ -74,21 +77,29 @@ class AssemblyDataset(Dataset):
         
         mask_1[mask_1 == 255] = 1
         mask_2[mask_2 == 255] = 1
+
+        # print(f"the size of mask_1 is {mask_1.shape}")
         
         # makes mask into size [height, width] with respective class at each index
         def mask_to_2D(mask):
             mask = mask[0, :, :] + mask[1, :, :] + torch.mul(mask[2, :, :], 2)
             return mask
         
+        
         mask_1 = mask_to_2D(mask_1)
         mask_2 = mask_to_2D(mask_2)
+
+        # print(f"unique in mask_1 is {torch.unique(mask_1)}")
 
         return img, [mask_1, mask_2]
     
     def get_transform(self, img_size):
         transform = A.Compose ([
             A.Resize(height=img_size, width=img_size),
+            # add gaussian noise, advanced blur, 
             A.ColorJitter(),
+            A.AdvancedBlur(),
+            A.GaussNoise(),
             A.RandomRotate90(p=0.5),
             ToTensorV2(transpose_mask=True)
         ])
