@@ -13,7 +13,7 @@ from ..models.UNET import UNET
 class LitModel(pl.LightningModule):
     def __init__(self, droprate=0, learning_rate=0.001):
         super(LitModel, self).__init__()
-        self.model = UNET(in_channels=3, out_channels=3, droprate=0)
+        self.model = UNET(in_channels=3, out_channels=3, droprate=droprate)
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
         self.learning_rate = learning_rate
 
@@ -105,7 +105,7 @@ class LitModel(pl.LightningModule):
     def _common_set(self, batch, batch_idx):
         x, y = batch
         raw_preds = self.model(x)
-        print(f"shape of input x is {x.shape}")
+        # print(f"shape of input x is {x.shape}")
         loss = self.get_loss(raw_preds, y)
         return loss, raw_preds
 

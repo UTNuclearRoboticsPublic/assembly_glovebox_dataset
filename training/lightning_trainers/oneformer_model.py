@@ -69,7 +69,7 @@ class OneFormerLitModel(LitModel):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
-        return optimizer
+        return {"optimizer": optimizer, "lr_scheduler": {scheduler}}
     
     def _common_set(self, batch, batch_idx):
         x, y = batch
@@ -87,8 +87,10 @@ class OneFormerLitModel(LitModel):
     def get_loss(self, raw_preds, y):
         losses = []
 
+        # print(f"len of y is {len(y)} and {y[0].shape} and {y[1].shape}")
 
         for target in y:
+            # print(f"teh target is {target.shape} and {target.dtype} and {torch.unique(target)}")
             ground = torch.nn.functional.one_hot(target.long(), num_classes=3)
             ground_truth = ground.permute(0,-1, 1, 2)
             loss_dict = self.model.get_loss_dict(

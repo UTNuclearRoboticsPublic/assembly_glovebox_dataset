@@ -2,14 +2,14 @@ seed_everything: true
 model:
   class_path: training.lightning_trainers.oneformer_model.OneFormerLitModel
   init_args:
-    learning_rate: 0.001
+    learning_rate: 0.0005
     weight_decay: 0.1
 trainer:
   callbacks: 
     - class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping
       init_args:
         monitor: "val_loss"
-        patience: 6
+        patience: 3
   accelerator: "gpu"
   strategy: 'ddp_find_unused_parameters_true'
   devices: auto
@@ -55,10 +55,10 @@ data:
       - Test_Subject_1
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_6
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
-      - Test_Subject_11
       - Test_Subject_11
       - Test_Subject_12
     distribution:
@@ -74,6 +74,7 @@ data:
       - Test_Subject_1
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_6
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10

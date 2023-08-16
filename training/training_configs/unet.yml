@@ -3,12 +3,13 @@ model:
   class_path: training.lightning_trainers.lightning_model.LitModel
   init_args:
     learning_rate: 0.001
+    droprate: 0.1
 trainer:
   callbacks: 
     - class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping
       init_args:
         monitor: "val_loss"
-        patience: 5
+        patience: 3
   accelerator: "gpu"
   strategy: auto
   devices: auto
@@ -54,6 +55,7 @@ data:
       - Test_Subject_1
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_6
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
@@ -69,16 +71,9 @@ data:
       - Side_View
   test_query:
     participants:
-      - Test_Subject_1
-      - Test_Subject_3
-      - Test_Subject_4
-      - Test_Subject_7
-      - Test_Subject_9
-      - Test_Subject_10
-      - Test_Subject_11
-      - Test_Subject_12
+      - Test_Subject_2
     distribution:
-      - ood
+      - id
     task:
       - J
       - TB
