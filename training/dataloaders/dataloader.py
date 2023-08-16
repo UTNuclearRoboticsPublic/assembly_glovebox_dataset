@@ -7,7 +7,9 @@ import PIL
 import os
 import matplotlib.pyplot as plt
 import albumentations as A
+import numpy as np
 from albumentations.pytorch import ToTensorV2
+import cv2
 
 class AssemblyDataset(Dataset):
     def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size):
@@ -37,11 +39,11 @@ class AssemblyDataset(Dataset):
         label_1 = self.masks_1[index]
         label_2 = self.masks_2[index]
         
-        image = Image.open(img)
-        image = image.convert("RGB")
+        image = cv2.imread(img)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        mask_1 = Image.open(label_1)
-        mask_2 = Image.open(label_2)
+        mask_1 = cv2.imread(label_1)
+        mask_2 = cv2.imread(label_2)
 
         # transform_input = {
         #     "image": image,
@@ -53,14 +55,25 @@ class AssemblyDataset(Dataset):
 
         # print(f"the output is {output}")
 
-        jitter = transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5)
-        image = jitter(image)
 
-        img, mask_1, mask_2 = self.transform(image, mask_1, mask_2)
+        transformed = self.transform(image=image, masks=[mask_1, mask_2])
 
+        img = transformed['image'] / 255
+        mask_1, mask_2 = transformed['masks']
+
+        mask_1 = mask_1.type(torch.float32)
+        mask_2 = mask_2.type(torch.float32)
+        img = img.type(torch.float32)
+
+        # print(torch.unique(img))
+
+        # print(f"the shape of mask_1 is {mask_1.shape} and {mask_2.shape} and {img.shape} and {mask_1.dtype}, {mask_2.dtype}, {img.dtype}, {torch.unique(mask_1)}")
         # img = self.transform(image)
         # mask_1 = self.transform(mask_1)
         # mask_2 = self.transform(mask_2)
+        
+        mask_1[mask_1 == 255] = 1
+        mask_2[mask_2 == 255] = 1
         
         # makes mask into size [height, width] with respective class at each index
         def mask_to_2D(mask):
@@ -74,9 +87,10 @@ class AssemblyDataset(Dataset):
     
     def get_transform(self, img_size):
         transform = A.Compose ([
-            A.Resize(height=img_size, width=img_size, interpolation=PIL.Image.NEAREST),
+            A.Resize(height=img_size, width=img_size),
+            A.ColorJitter(),
             A.RandomRotate90(p=0.5),
-            ToTensorV2()
+            ToTensorV2(transpose_mask=True)
         ])
         return transform
 
@@ -84,15 +98,17 @@ class AssemblyDataset(Dataset):
 if __name__ == "__main__":
     # test the loader with the below
 
-    dataset = AssemblyDataset(path_to_labels=['.\\data\\Labels\\Test_Subject_1\\id\\J\\Side_View', '.\\data\\Labels\\Test_Subject_1\\id\\J\\Top_View'], 
-                              path_to_images=['.\\data\\Labels\\Test_Subject_1\\id\\J\\Side_View', '.\\data\\Labels\\Test_Subject_1\\id\\J\\Top_View'])
+    dataset = AssemblyDataset(path_to_1_labels=['./data/Labels/Test_Subject_1/By_1/id/J/Side_View'], 
+                              path_to_2_labels=['./data/Labels/Test_Subject_1/By_2/id/J/Side_View'],
+                              path_to_images=['./data/images/Test_Subject_1/id/J/Side_View'],
+                              img_size=161)
 
     dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
 
     for i, (images, masks) in enumerate(dataloader):
-        masks = masks[0]
+        masks = masks[0][0]
         images = images[0]
         plt.imshow(np.transpose(images, (1, 2, 0)))
         # plt.imshow(np.reshape(masks, (masks.shape[2], masks.shape[1], masks.shape[0])), alpha=0.2)
         plt.imshow(masks, alpha=0.5)
-        plt.show()
+        plt.savefig("hi.png")
