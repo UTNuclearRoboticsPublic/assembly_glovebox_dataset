@@ -6,6 +6,8 @@ from PIL import Image
 import PIL
 import os
 import matplotlib.pyplot as plt
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 class AssemblyDataset(Dataset):
     def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size):
@@ -71,10 +73,10 @@ class AssemblyDataset(Dataset):
         return img, [mask_1, mask_2]
     
     def get_transform(self, img_size):
-        transform = transforms.Compose ([
-            transforms.Resize(size=(img_size, img_size), interpolation=PIL.Image.NEAREST),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.ToTensor()
+        transform = A.Compose ([
+            A.Resize(height=img_size, width=img_size, interpolation=PIL.Image.NEAREST),
+            A.RandomRotate90(p=0.5),
+            ToTensorV2()
         ])
         return transform
 
