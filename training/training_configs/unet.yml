@@ -6,7 +6,7 @@ model:
     droprate: 0.1
 trainer:
   callbacks: 
-    - class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping
+    - class_path: EarlyStopping
       init_args:
         monitor: "val_loss"
         patience: 3
@@ -16,7 +16,6 @@ trainer:
   num_nodes: 1
   precision: 32-true
   logger: true
-  callbacks: null
   fast_dev_run: false
   max_epochs: -1
   min_epochs: null

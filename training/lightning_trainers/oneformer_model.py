@@ -68,8 +68,8 @@ class OneFormerLitModel(LitModel):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
-        return {"optimizer": optimizer, "lr_scheduler": {scheduler}}
+        # scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
+        return optimizer
     
     def _common_set(self, batch, batch_idx):
         x, y = batch

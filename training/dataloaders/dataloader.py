@@ -96,7 +96,6 @@ class AssemblyDataset(Dataset):
     def get_transform(self, img_size):
         transform = A.Compose ([
             A.Resize(height=img_size, width=img_size),
-            # add gaussian noise, advanced blur, 
             A.ColorJitter(),
             A.AdvancedBlur(),
             A.GaussNoise(),
