@@ -17,7 +17,7 @@ trainer:
         save_top_k: 2
   accelerator: "gpu"
   strategy: 'ddp_find_unused_parameters_true'
-  devices: auto
+  devices: [0, 1]
   num_nodes: 1
   precision: 32-true
   logger: true
@@ -92,6 +92,6 @@ data:
     view:
       - Top_View
       - Side_View
-  batch_size: 16
-  img_size: 161
+  batch_size: 8
+  img_size: 256
 ckpt_path: null
