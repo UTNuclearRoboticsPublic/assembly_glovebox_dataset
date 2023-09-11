@@ -9,6 +9,8 @@ from lightning.pytorch.cli import LightningCLI
 from lightning.pytorch.callbacks import EarlyStopping
 import lightning
 
+from lightning.pytorch.callbacks import ModelCheckpoint
+
 import lightning.pytorch as pl
 
 
