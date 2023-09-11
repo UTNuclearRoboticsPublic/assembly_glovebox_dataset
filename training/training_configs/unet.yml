@@ -5,14 +5,14 @@ model:
     learning_rate: 0.001
     droprate: 0.1
 trainer:
-  callbacks: 
-    - class_path: EarlyStopping
-      init_args:
-        monitor: "val_loss"
-        patience: 3
+  callbacks: null
+    # - class_path: EarlyStopping
+    #   init_args:
+    #     monitor: "val_loss"
+    #     patience: 3
   accelerator: "gpu"
   strategy: auto
-  devices: auto
+  devices: [0, 1]
   num_nodes: 1
   precision: 32-true
   logger: true
@@ -79,6 +79,6 @@ data:
     view:
       - Top_View
       - Side_View
-  batch_size: 32
-  img_size: 161
+  batch_size: 16
+  img_size: 512
 ckpt_path: null
