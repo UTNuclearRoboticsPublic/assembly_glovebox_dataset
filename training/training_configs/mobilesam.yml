@@ -2,7 +2,7 @@ seed_everything: true
 model:
   class_path: training.lightning_trainers.mobilesam_model.MobileSamLitModel
   init_args:
-    learning_rate: 0.0008
+    learning_rate: 0.00002
 trainer:
   callbacks:
       class_path: EarlyStopping
@@ -17,7 +17,7 @@ trainer:
         save_top_k: 2
   accelerator: "gpu"
   strategy: 'ddp_find_unused_parameters_true'
-  devices: [0, 1]
+  devices: [1]
   num_nodes: 1
   precision: 32-true
   logger: true

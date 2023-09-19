@@ -9,19 +9,19 @@ trainer:
       class_path: EarlyStopping
       init_args:
         monitor: "val_loss"
-        patience: 3
-      class_path: lightning.pytorch.callbacks.ModelCheckpoint
+        mode: "min"
+        patience: 7
+      class_path: ModelCheckpoint
       init_args:
         monitor: "val_iou"
         mode: "max"
         save_top_k: 2
   accelerator: "gpu"
   strategy: auto
-  devices: [0, 1]
+  devices: [2]
   num_nodes: 1
   precision: 32-true
   logger: true
-  callbacks: null
   fast_dev_run: false
   max_epochs: -1
   min_epochs: null
@@ -93,6 +93,6 @@ data:
     view:
       - Top_View
       - Side_View
-  batch_size: 64
-  img_size: 512
+  batch_size: 128
+  img_size:  256
 ckpt_path: null

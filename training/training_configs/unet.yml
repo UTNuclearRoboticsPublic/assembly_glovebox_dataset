@@ -5,14 +5,20 @@ model:
     learning_rate: 0.001
     droprate: 0.1
 trainer:
-  callbacks: null
-    # - class_path: EarlyStopping
-    #   init_args:
-    #     monitor: "val_loss"
-    #     patience: 3
+  callbacks:
+      class_path: EarlyStopping
+      init_args:
+        monitor: "val_loss"
+        mode: "min"
+        patience: 7
+      class_path: ModelCheckpoint
+      init_args:
+        monitor: "val_iou"
+        mode: "max"
+        save_top_k: 2
   accelerator: "gpu"
   strategy: auto
-  devices: [0, 1]
+  devices: [2]
   num_nodes: 1
   precision: 32-true
   logger: true
