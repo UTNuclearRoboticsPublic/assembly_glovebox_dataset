@@ -5,6 +5,7 @@ import lightning.pytorch as pl
 import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
+import matplotlib.pyplot as plt
 
 from ..metrics import *
 from ..models.UNET import UNET
@@ -60,6 +61,9 @@ class LitModel(pl.LightningModule):
         return (iou1+iou2) / 2
 
     def test_step(self, batch, batch_idx):
+        # add matplotlib figure - https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter.add_figure
+
+
         x, y = batch
         # is this working properly? barely any metric data.
         loss, raw_preds = self._common_set(batch, batch_idx)
@@ -81,6 +85,16 @@ class LitModel(pl.LightningModule):
             sync_dist=True
         )
 
+        # return predictive_entropy(raw_preds)
+    """
+    def test_epoch_end(self, outputs):
+        entropy_values = outputs["predictive_entropy"]
+        boxplot = plt.boxplot(entropy_values)
+
+        self.logger.experiment.add_figure(
+            tag="predictive entropy", figure=boxplot
+            )
+    """
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint
         # use argmax here
