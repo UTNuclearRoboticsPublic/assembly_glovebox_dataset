@@ -18,6 +18,8 @@ class LitModel(pl.LightningModule):
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
         self.learning_rate = learning_rate
 
+        self.entropy_outputs = []
+
         #only use hyperparameters if you need it for instantiating the model
         # otherwise, use it from the CLI only for simplicity
         # self.save_hyperparameters()
@@ -72,6 +74,7 @@ class LitModel(pl.LightningModule):
             ace1 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[0])
             ace2 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[1])
             return (ace1+ace2) / 2
+        
 
         # automatically averages these values across the epoch
         self.log_dict(
@@ -79,22 +82,27 @@ class LitModel(pl.LightningModule):
                 "test_loss": loss,
                 "test_iou": self.get_avg_iou(raw_preds, y),
                 "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
-                "test_entropy": predictive_entropy(raw_preds)
+                # "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True,
             sync_dist=True
         )
 
-        # return predictive_entropy(raw_preds)
-    """
-    def test_epoch_end(self, outputs):
-        entropy_values = outputs["predictive_entropy"]
-        boxplot = plt.boxplot(entropy_values)
+        return_ent = predictive_entropy(raw_preds)
+
+        self.entropy_outputs.extend(return_ent)
+    
+    def on_test_epoch_end(self):
+        entropy_values = self.entropy_outputs
+        print(f".............the entropy values are {entropy_values}")
+
+        fig = plt.figure(figsize =(10, 7))
+        plt.boxplot(entropy_values)
 
         self.logger.experiment.add_figure(
-            tag="predictive entropy", figure=boxplot
+            tag="predictive entropy", figure=fig
             )
-    """
+    
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint
         # use argmax here
