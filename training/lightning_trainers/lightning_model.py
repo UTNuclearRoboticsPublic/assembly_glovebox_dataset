@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from ..metrics import *
 from ..models.UNET import UNET
 
+import os
+import csv
 
 class LitModel(pl.LightningModule):
     def __init__(self, droprate=0, learning_rate=0.001):
@@ -19,6 +21,8 @@ class LitModel(pl.LightningModule):
         self.learning_rate = learning_rate
 
         self.entropy_outputs = []
+
+
 
         #only use hyperparameters if you need it for instantiating the model
         # otherwise, use it from the CLI only for simplicity
@@ -102,6 +106,17 @@ class LitModel(pl.LightningModule):
         self.logger.experiment.add_figure(
             tag="predictive entropy", figure=fig
             )
+
+        csv_path = os.path.join(self.trainer.log_dir, "raw_entropy.csv")
+        
+
+        with open(csv_path, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+
+            for item in entropy_values:
+                csv_writer.writerow([item])
+        
+
     
     def predict_step(self, batch, batch_idx):
         # used only when loading a model from a checkpoint
