@@ -6,6 +6,7 @@ import torchmetrics
 import numpy as np
 from lightning.pytorch import loggers as pl_loggers
 import matplotlib.pyplot as plt
+import time
 
 from ..metrics import *
 from ..models.UNET import UNET
@@ -14,13 +15,17 @@ import os
 import csv
 
 class LitModel(pl.LightningModule):
-    def __init__(self, droprate=0, learning_rate=0.001):
+    def __init__(self, droprate=0, learning_rate=0.001, test_dropout=False):
         super(LitModel, self).__init__()
         self.model = UNET(in_channels=3, out_channels=3, droprate=droprate)
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
         self.learning_rate = learning_rate
 
         self.entropy_outputs = []
+
+        self.avg_pred_time = 0.0
+
+        self.test_dropout = test_dropout
 
 
 
@@ -69,6 +74,9 @@ class LitModel(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # add matplotlib figure - https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter.add_figure
 
+        if self.test_dropout:
+            print("....we made it to dropout")
+            self.model.train()
 
         x, y = batch
         # is this working properly? barely any metric data.
@@ -86,6 +94,7 @@ class LitModel(pl.LightningModule):
                 "test_loss": loss,
                 "test_iou": self.get_avg_iou(raw_preds, y),
                 "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
+                "avg_frame_reference_time": self.avg_pred_time
                 # "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True,
@@ -106,16 +115,17 @@ class LitModel(pl.LightningModule):
         self.logger.experiment.add_figure(
             tag="predictive entropy", figure=fig
             )
-
-        csv_path = os.path.join(self.trainer.log_dir, "raw_entropy.csv")
         
 
-        with open(csv_path, 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
+        if not self.trainer.fast_dev_run:
+            csv_path = os.path.join(self.trainer.log_dir, "raw_entropy.csv")
 
-            for item in entropy_values:
-                csv_writer.writerow([item])
-        
+            with open(csv_path, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+
+                for item in entropy_values:
+                    csv_writer.writerow([item])
+            
 
     
     def predict_step(self, batch, batch_idx):
@@ -141,7 +151,14 @@ class LitModel(pl.LightningModule):
 
     def _common_set(self, batch, batch_idx):
         x, y = batch
+        start_time = time.time()
+
         raw_preds = self.model(x)
+
+        end_time = time.time()
+        pred_time = end_time - start_time
+        print(f".....the pred time is {pred_time} and {x.shape}")
+        self.avg_pred_time = pred_time / x.shape[0]
         # print(f"shape of input x is {x.shape}")
         loss = self.get_loss(raw_preds, y)
         return loss, raw_preds

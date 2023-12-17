@@ -4,6 +4,7 @@ model:
   init_args:
     learning_rate: 0.001
     weight_decay: 0.1
+    test_dropout: false
 trainer:
   callbacks: 
       class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping

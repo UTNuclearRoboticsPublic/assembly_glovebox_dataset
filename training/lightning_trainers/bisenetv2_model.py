@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 # like UNet, just check the declarations
 class BiSeNetV2Model(LitModel):
-    def __init__(self, learning_rate=0.001, weight_decay=0.1):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1, test_dropout=False):
         super(BiSeNetV2Model, self).__init__()
 
         self.learning_rate = learning_rate
@@ -16,6 +16,8 @@ class BiSeNetV2Model(LitModel):
         self.iou = torchmetrics.JaccardIndex(task="multiclass", num_classes=3)
 
         self.model = BiSeNetV2(n_classes=3)
+
+        self.test_dropout = test_dropout
 
     def get_loss(self, raw_preds, y):
         y1, y2 = y

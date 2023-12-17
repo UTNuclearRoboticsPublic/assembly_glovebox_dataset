@@ -18,7 +18,7 @@ class OneFormerLitModel(LitModel):
     This inherits some methods from the LitModel class.
     """
 
-    def __init__(self, learning_rate=0.001, weight_decay=0.1):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1, test_dropout=False):
         super(OneFormerLitModel, self).__init__()
 
         id2label = {
@@ -26,6 +26,8 @@ class OneFormerLitModel(LitModel):
             1: "left_hand",
             2: "right_hand"
         }
+
+        self.test_dropout = test_dropout
         
 
         self.model = OneFormerForUniversalSegmentation.from_pretrained(
