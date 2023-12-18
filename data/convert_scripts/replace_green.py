@@ -34,12 +34,15 @@ import os
 import shutil
 
 class GreenRemover:
-    def __init__(self, participant_number, total_images):
+    def __init__(self, participant_number, total_images, classes):
         self.participant_number = participant_number
         self.total_images = total_images
-        self.urls = self.get_replacement_urls(classes = ["animals", "sports balls", "boxes", "books", "pencils"], total_images=total_images)
+        self.urls = self.get_replacement_urls(classes = classes, total_images=total_images)
 
     def replace(self, participant_number):
+        """
+        This function replaces the green screen in the images for the given participant number.
+        """
         label_dir = f'./temp/green_screen/Test_Subject_{participant_number}'
         image_dir = f'./images/Test_Subject_{participant_number}/ood'
         
@@ -69,6 +72,9 @@ class GreenRemover:
 
 
     def get_new_img(self, raw_label, raw_image):
+        """
+        This function processes the green screen image and replaces it with a random image.
+        """
         img_array = np.array(Image.open(raw_image))
         label_array = np.asarray(cv2.imread(raw_label))
 
@@ -217,6 +223,9 @@ class OrganizeScreens:
             image.save(f"./temp/green_screen/Test_Subject_{participant_number}/{task}/{view}/{image_name}")
 
     def get_json_directory_paths(self, project_number):
+        """
+        This function returns the path to the json file and the matching folder
+        """
         pattern = f'project-{project_number}*.json'
         matching_files = []
         for file in os.listdir('./raw'):
@@ -247,6 +256,7 @@ if __name__ == '__main__':
     }
     
     participant_number = 6
+    # the organizer class is responsible for organizing the screens by parsing JSON files and converting labels
     organizer = OrganizeScreens(participant_number=participant_number)
 
     # edit the images path
@@ -260,8 +270,10 @@ if __name__ == '__main__':
 
 
     ## now overlaying images onto the green screen
+    # the green remover class is responsible for removing the green screen from images and replacing it with random images from specified classes
     total_images = 20
-    green_remover = GreenRemover(participant_number=6, total_images=total_images)
+    classes = ["animals", "sports balls", "boxes", "books", "pencils"]
+    green_remover = GreenRemover(participant_number=6, total_images=total_images, classes = classes)
     
     green_remover.replace(participant_number=6)
 
@@ -270,4 +282,3 @@ if __name__ == '__main__':
     if os.path.exists(dir_path):
         # remove all contents of directory
         shutil.rmtree(dir_path)
-    
