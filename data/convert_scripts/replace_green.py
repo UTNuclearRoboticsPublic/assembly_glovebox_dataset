@@ -1,3 +1,23 @@
+"""
+This script contains two classes: GreenRemover and OrganizeScreens.
+
+GreenRemover:
+- This class is responsible for removing the green screen from images and replacing it with random images from specified classes.
+- It takes the participant number and total number of images as input during initialization.
+- The replace() method replaces the green screen in the images for the given participant number.
+- The get_new_img() method processes the green screen image and replaces it with a random image.
+- The get_padding() method calculates the padding required for the replacement image.
+- The get_replacement_urls() method retrieves URLs of random images from specified classes.
+
+OrganizeScreens:
+- This class is responsible for organizing the screens by parsing JSON files and converting labels.
+- It takes the participant number as input during initialization.
+- The parse_json() method parses the JSON file and returns a list of matches and unique annotators.
+- The convert() method converts the labels by matching them with the JSON data and saving the converted images.
+- The get_json_directory_paths() method retrieves the paths of the JSON file and matching folder.
+
+Note: The script also includes the main execution code that initializes the OrganizeScreens class and performs conversions, and then initializes the GreenRemover class to replace the green screen in the images.
+"""
 from PIL import Image
 import numpy as np
 import torch
@@ -8,13 +28,16 @@ import math
 import requests
 import random
 from io import BytesIO
+import json
+import fnmatch
+import os
+import shutil
 
 class GreenRemover:
     def __init__(self, participant_number, total_images):
         self.participant_number = participant_number
         self.total_images = total_images
         self.urls = self.get_replacement_urls(classes = ["animals", "sports balls", "boxes", "books", "pencils"], total_images=total_images)
-        os.chdir('./data')
 
     def replace(self, participant_number):
         label_dir = f'./temp/green_screen/Test_Subject_{participant_number}'
@@ -122,10 +145,129 @@ class GreenRemover:
             urls += search_images_ddg(object, max_images= math.ceil(total_images / len(classes)))
 
         return urls
+
+class OrganizeScreens:
+    def __init__(self, participant_number):
+        self.participant_number = participant_number
+
+    def parse_json(self, path_to_json):
+        with open(path_to_json) as json_file:
+            data = json.load(json_file)
+        # declare tuple with image name and id
+        matches = []
+        all_annotators = []
+        prev_width = None
+        prev_height = None
+        for obj in data:
+            # save the annotator ID and what their unique numbers are
+            image_name = obj["image"].split("-")[-1]
+            image_id = int(obj['id'])
+            annotator = int(obj['annotator'])
+            try:
+                orig_width = int(obj['tag'][0]['original_width'])
+                orig_height = int(obj['tag'][0]['original_height'])
+
+                prev_width, prev_height = orig_width, orig_height
+            except:
+                orig_width = prev_width
+                orig_height = prev_height
+                print(f"exception for {image_name} with {image_id} for annotator {annotator} for {path_to_json}")
+
+            all_annotators.append(annotator)
+            matches.append((image_name, image_id, annotator, orig_width, orig_height))
+        unique_annotators = list(set(all_annotators)) # this is to only find unique annotators
+        return matches, unique_annotators
+
+    def convert(self, path_to_labels, path_to_json, participant_number):
+        labels = os.listdir(path_to_labels) # binary ground truth
+
+        matches, unique_annotators = self.parse_json(path_to_json) # json object return where each object has (image name, id)
+        
+        """"
+        to add annotators:
+        - in parse json, get the numbers of the annotators
+        - add an external for loop for each annotator
+        - when saving the multiclass label add the number of the annotator at the end (use either 1 or 2)
+        - 
+        """
+
+        for match in matches:
+            image_name = match[0]
+            image_id = match[1]
+            annotator = match[2]
+            orig_width = match[3]
+            orig_height = match[4]
+            # add annotator number here
+
+            task = image_name.split("_")[0] 
             
+            matching_masks = []
+            for label in labels:
+                label_id = int(label.split("-")[1]) # this is the id number on the ground truth
+                # also extract the annotator number ("by-x")
+                label_annot_id = int(label.split("-")[-4])
+                if label_id == image_id: # if the gt id matches the json id, add if it matches the annotator
+                    if label_annot_id == annotator:
+                        matching_masks.append(label)
+            
+            for label in matching_masks:
+                image = Image.open(f"{path_to_labels}/{label}")
+
+            os.makedirs(f"./temp/green_screen/Test_Subject_{participant_number}/{task}/{view}", exist_ok=True)
+            image.save(f"./temp/green_screen/Test_Subject_{participant_number}/{task}/{view}/{image_name}")
+
+    def get_json_directory_paths(self, project_number):
+        pattern = f'project-{project_number}*.json'
+        matching_files = []
+        for file in os.listdir('./raw'):
+            if fnmatch.fnmatch(file, pattern):
+                matching_files.append(file)
+        file = matching_files[0]
+        name = file.split('.')[0]
+
+        matching_folder = ""
+
+        for root, dirs, files in os.walk('./raw'):
+            for directory in dirs:
+                ## check if the string directory matches the name
+
+                if directory.split('-')[-1] == name.split('-')[-1]:
+                    matching_folder = f"./raw/{directory}"
+        
+        return f'./raw/{file}', matching_folder
+                
 
 if __name__ == '__main__':
-    total_images = 20 ## TODO: find how to calculate this number -> it's automatically calculated
+    os.chdir('./data')
+
+    'Edit the following to the project numbers that match before converting--'
+    proj_num_to_type = {
+        "Top_View": 4,
+        "Side_View": 3
+    }
+    
+    participant_number = 6
+    organizer = OrganizeScreens(participant_number=participant_number)
+
+    # edit the images path
+    # do all the conversions at once
+    for view in ["Side_View", "Top_View"]:
+        key = view
+        proj_num = int(proj_num_to_type[key])
+        json_file_path, matching_folder = organizer.get_json_directory_paths(project_number = proj_num)
+        # matching_labels = filter_labels_by_experiment(experiment_name = task, matching_folder = matching_folder)
+        organizer.convert(matching_folder, json_file_path, participant_number)
+
+
+    ## now overlaying images onto the green screen
+    total_images = 20
     green_remover = GreenRemover(participant_number=6, total_images=total_images)
     
     green_remover.replace(participant_number=6)
+
+    dir_path = './temp'
+
+    if os.path.exists(dir_path):
+        # remove all contents of directory
+        shutil.rmtree(dir_path)
+    
