@@ -1,0 +1,15 @@
+# Ignore specific folders within the "data" folder
+data/images/
+data/Labels/
+data/raw/
+data/temp/
+data/videos/
+
+logs
+lighting_logs
+training/ignore_this_folder/test-trainer
+training/ignore_this_folder/wandb
+
+# Ignore all folders named "_pycache_"
+**/_pycache_/
+
