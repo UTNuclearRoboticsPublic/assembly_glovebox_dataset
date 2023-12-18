@@ -24,7 +24,7 @@ from training.lightning_trainers.lightning_model import LitModel
 ### ADD MSE LOSS INSTEAD
 
 class MobileSamLitModel(LitModel):
-    def __init__(self, learning_rate=0.001, weight_decay=0.1):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1, test_dropout=False):
         super(MobileSamLitModel, self).__init__()
         
         model_type = "vit_t"
@@ -36,6 +36,8 @@ class MobileSamLitModel(LitModel):
 
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
+
+        self.test_dropout = test_dropout
 
 
 

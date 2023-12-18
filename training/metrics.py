@@ -6,9 +6,13 @@ import torch
 
 def predictive_entropy(preds, mean=True):
     # base defaults to natural log
+    print(f".....preds shape is {preds.shape}")
     probs = F.softmax(preds, dim=1)
     pred_entropy = np.apply_along_axis(entropy, 1, probs.cpu().numpy())
-    return np.mean(pred_entropy) if mean else pred_entropy
+    print(f"........the shape of entropy is {np.shape(pred_entropy)}")
+    shape = np.shape(pred_entropy)
+    return_ent = pred_entropy.reshape(shape[0], shape[-1]*shape[-2])
+    return list(np.mean(return_ent, axis=1)) if mean else pred_entropy
 
 def expected_calibration_error(preds, targets):
     num_bins = 15
@@ -41,6 +45,8 @@ def adaptive_calibration_error(y_pred, y_true, num_bins=15):
 
     """## Initializing Inputs"""
 
+    print(f"the shape of y pred is {y_pred.shape} and true is {y_true.shape}")
+
     probs = torch.softmax(y_pred, dim=1)
     confidences, y_hats = torch.max(probs, dim=1) # respective values (max value along each row), indices (argmax return)
 
@@ -48,7 +54,7 @@ def adaptive_calibration_error(y_pred, y_true, num_bins=15):
 
     """## Sorting softmax prediction and ground truth values (BEFORE BINNING)"""
 
-    num_ranges = 23
+    num_ranges = 16 # has to be divisible by the image size (no workaround yet -> img size is 256 so we are using 16 as a factor)
 
     flattened = torch.flatten(probs, start_dim=2)
     sorted_pred, sort_indices = torch.sort(flattened, dim=1)

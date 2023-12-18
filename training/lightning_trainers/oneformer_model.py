@@ -18,7 +18,7 @@ class OneFormerLitModel(LitModel):
     This inherits some methods from the LitModel class.
     """
 
-    def __init__(self, learning_rate=0.001, weight_decay=0.1):
+    def __init__(self, learning_rate=0.001, weight_decay=0.1, test_dropout=False):
         super(OneFormerLitModel, self).__init__()
 
         id2label = {
@@ -26,6 +26,8 @@ class OneFormerLitModel(LitModel):
             1: "left_hand",
             2: "right_hand"
         }
+
+        self.test_dropout = test_dropout
         
 
         self.model = OneFormerForUniversalSegmentation.from_pretrained(
@@ -43,7 +45,7 @@ class OneFormerLitModel(LitModel):
                                                             num_labels=3, 
                                                             class_names=["background", "left_hand", "right_hand"], 
                                                             do_reduce_labels=True,
-                                                            size= (161 * 4, 161 * 4), # this MUST be the size of the image * 4
+                                                            size= (256 * 4, 256 * 4), # this MUST be the size of the image * 4
                                                             # do_resize=False,
                                                             ignore_mismatched_sizes=True) 
         
@@ -68,8 +70,8 @@ class OneFormerLitModel(LitModel):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
-        scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
-        return {"optimizer": optimizer, "lr_scheduler": {scheduler}}
+        # scheduler = torch.optim.lr_scheduler.PolynomialLR(optimizer)
+        return optimizer
     
     def _common_set(self, batch, batch_idx):
         x, y = batch

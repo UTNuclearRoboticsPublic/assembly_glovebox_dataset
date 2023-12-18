@@ -1,22 +1,28 @@
 seed_everything: true
 model:
-  class_path: training.lightning_trainers.bisenetv2_model.BiSeNetV2Model
+  class_path: BiSeNetV2Model
   init_args:
     learning_rate: 0.001
     weight_decay: 0.1
+    test_dropout: false
 trainer:
-  callbacks: 
-    - class_path: lighting.pytorch.callbacks.early_stopping.EarlyStopping
+  callbacks:
+      class_path: EarlyStopping
       init_args:
         monitor: "val_loss"
-        patience: 5
+        mode: "min"
+        patience: 7
+      class_path: ModelCheckpoint
+      init_args:
+        monitor: "val_iou"
+        mode: "max"
+        save_top_k: 2
   accelerator: "gpu"
   strategy: auto
-  devices: auto
+  devices: [2]
   num_nodes: 1
   precision: 32-true
   logger: true
-  callbacks: null
   fast_dev_run: false
   max_epochs: -1
   min_epochs: null
@@ -55,6 +61,7 @@ data:
       - Test_Subject_1
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_6
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
@@ -73,6 +80,7 @@ data:
       - Test_Subject_1
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_6
       - Test_Subject_7
       - Test_Subject_9
       - Test_Subject_10
@@ -86,6 +94,6 @@ data:
     view:
       - Top_View
       - Side_View
-  batch_size: 16
-  img_size: 512
+  batch_size: 128
+  img_size:  256
 ckpt_path: null
