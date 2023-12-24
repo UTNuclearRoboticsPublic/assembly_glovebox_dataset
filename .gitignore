@@ -6,7 +6,7 @@ data/temp/
 data/videos/
 
 logs
-lighting_logs
+lighting_logs/
 training/ignore_this_folder/test-trainer
 training/ignore_this_folder/wandb
 
