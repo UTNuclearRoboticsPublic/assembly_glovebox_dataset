@@ -58,8 +58,13 @@ class AssemblyDataset(Dataset):
 
         # print(f"the output is {output}")
 
+        assert img.split('/')[-1].split('.')[0] == label_1.split('/')[-1].split('.')[0] == label_2.split('/')[-1].split('.')[0]
 
+
+        
         transformed = self.transform(image=image, masks=[mask_1, mask_2])
+
+        # assert that label names and images match
 
         img = transformed['image'] / 255
         mask_1, mask_2 = transformed['masks']

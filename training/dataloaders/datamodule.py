@@ -12,7 +12,6 @@ class AssemblyDataModule(pl.LightningDataModule):
         self.test_query = test_query
         self.batch_size = batch_size
         self.img_size = img_size
-        # print(f"Initialized {fit_query} and {test_query}")
         super().__init__()
 
     def setup(self, stage: str):
@@ -31,6 +30,14 @@ class AssemblyDataModule(pl.LightningDataModule):
 
             self.train_set, self.valid_set = random_split(train_set, [train_set_size, 
             valid_set_size])
+
+            # changing val set to the test query
+            
+            # self.train_set = train_set
+
+            # val_path_to_imgs, val_path_to_1_labels, val_path_to_2_labels = self._get_files(self.test_query)
+            # self.valid_set = AssemblyDataset(path_to_1_labels=val_path_to_1_labels, path_to_2_labels=val_path_to_2_labels, path_to_images=val_path_to_imgs, img_size=self.img_size)
+
 
     def train_dataloader(self):
         return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True, num_workers=128, pin_memory=True)
