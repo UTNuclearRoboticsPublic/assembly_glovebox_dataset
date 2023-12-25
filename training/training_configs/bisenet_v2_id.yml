@@ -19,7 +19,7 @@ trainer:
         save_top_k: 2
   accelerator: "gpu"
   strategy: auto
-  devices: [2]
+  devices: [1, 2]
   num_nodes: 1
   precision: 32-true
   logger: true
@@ -77,17 +77,9 @@ data:
       - Side_View
   test_query:
     participants:
-      - Test_Subject_1
-      - Test_Subject_3
-      - Test_Subject_4
-      - Test_Subject_6
-      - Test_Subject_7
-      - Test_Subject_9
-      - Test_Subject_10
-      - Test_Subject_11
-      - Test_Subject_12
+      - Test_Subject_2
     distribution:
-      - ood
+      - id
     task:
       - J
       - TB
@@ -96,4 +88,4 @@ data:
       - Side_View
   batch_size: 128
   img_size:  256
-ckpt_path: null
+ckpt_path: ./lightning_logs/version_79/checkpoints/epoch=3373-step=26992.ckpt
