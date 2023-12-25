@@ -67,7 +67,7 @@ class GreenRemover:
 
                     os.makedirs(f"./images/Test_Subject_{participant_number}/replaced_green_screen/{task}/{view}", exist_ok=True)
                     save_img = Image.fromarray(final_img)
-                    save_img.save(f"./images/Test_Subject_{participant_number}/replaced_green_screen/{task}/{view}/{raw_image}.png")
+                    save_img.save(f"./images/Test_Subject_{participant_number}/replaced_green_screen/{task}/{view}/{raw_image}")
             
 
 
