@@ -87,6 +87,9 @@ class LitModel(pl.LightningModule):
             ace2 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[1])
             return (ace1+ace2) / 2
         
+        # because bisenet return multiple logits in train mode
+        if isinstance(raw_preds, tuple):
+            raw_preds = raw_preds[0]
 
         # automatically averages these values across the epoch
         self.log_dict(
