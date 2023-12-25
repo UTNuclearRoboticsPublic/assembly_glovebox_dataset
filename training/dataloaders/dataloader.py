@@ -29,8 +29,8 @@ class AssemblyDataset(Dataset):
             labels1, labels2 = gs_labels
             imgs = gs_images
 
-            matching_masks_1 = [os.path.join(path, file) for path in labels1 for file in os.listdir(path) if file.contains('J_NG_G') or file.contains('J_GL_G')]
-            matching_masks_2 = [os.path.join(path, file) for path in labels2 for file in os.listdir(path) if file.contains('J_NG_G') or file.contains('J_GL_G')]
+            matching_masks_1 = [os.path.join(path, file) for path in labels1 for file in os.listdir(path) if 'NG_G' in file or 'GL_G' in file]
+            matching_masks_2 = [os.path.join(path, file) for path in labels2 for file in os.listdir(path) if 'NG_G' in file or 'GL_G' in file]
             images = [os.path.join(path, file) for path in imgs for file in os.listdir(path) if file.endswith('.png')]
 
             self.masks_1.extend(matching_masks_1)
@@ -72,9 +72,9 @@ class AssemblyDataset(Dataset):
 
         # print(f"the output is {output}")
 
-        assert img.split('/')[-1].split('.')[0] == label_1.split('/')[-1].split('.')[0] == label_2.split('/')[-1].split('.')[0]
+        assert img.split('/')[-1].split('.')[0] == label_1.split('/')[-1].split('.')[0] == label_2.split('/')[-1].split('.')[0], f"Label names and images do not match for index {img} and {label_1} and {label_2} and {self.images} and {self.masks_1}"
 
-
+        
         
         transformed = self.transform(image=image, masks=[mask_1, mask_2])
 

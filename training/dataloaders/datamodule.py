@@ -18,8 +18,8 @@ class AssemblyDataModule(pl.LightningDataModule):
         fit_files = []
 
         if stage=="test" or stage=="predict":
-            path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.test_query)
-            self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size)
+            path_to_imgs, path_to_1_labels, path_to_2_labels, gs_images, (gs_labels_1, gs_labels_2) = self._get_files(self.test_query)
+            self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size, gs_images=gs_images, gs_labels=(gs_labels_1, gs_labels_2))
 
         if stage=="fit":
             path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.fit_query)
@@ -63,6 +63,16 @@ class AssemblyDataModule(pl.LightningDataModule):
         gs_labels_1 = []
         gs_labels_2 = []
         gs_images = []
+
+        print(f"the query is {query}")
+
+        
+        try: 
+            x = query.get("participants")
+        except:
+            print(f"the query is {query}")
+            query = dict(query)
+            # query["participants"] = ["P1", "P2", "P3", "P4", "P5", "P6", "P7"]
         for participant in query.get("participants"):
             for dist in query.get("distribution"):
                 for task in query.get("task"):
@@ -71,16 +81,17 @@ class AssemblyDataModule(pl.LightningDataModule):
                         # I added a part in the parser so that the annotator number will only be either 1 or 2
                         image_path = os.path.join('.', 'data', 'images', participant, dist, task, view)
 
-                        if dist=="replace_green_screen":
+                        if dist=="replaced_green_screen":
                             label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', "ood", task, view)
                             label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', "ood", task, view)
                             gs_labels_1.append(label_1_path)
                             gs_labels_2.append(label_2_path)
                             gs_images.append(image_path)
 
-                        else: 
-                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', dist, task, view)
-                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', dist, task, view)
+                        else:
+                            dist2 = "ood" if dist=="replaced_green_screen" else dist
+                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', dist2, task, view)
+                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', dist2, task, view)
 
                             label_1_dirs.append(label_1_path)
                             label_2_dirs.append(label_2_path)
