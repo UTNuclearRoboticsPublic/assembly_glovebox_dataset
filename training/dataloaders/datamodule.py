@@ -60,16 +60,33 @@ class AssemblyDataModule(pl.LightningDataModule):
         label_1_dirs = []
         label_2_dirs = []
         image_dirs = []
+        gs_labels_1 = []
+        gs_labels_2 = []
+        gs_images = []
         for participant in query.get("participants"):
             for dist in query.get("distribution"):
                 for task in query.get("task"):
                     for view in query.get("view"):
                         # TODO: create two paths -> one for first annotator, one for the second
                         # I added a part in the parser so that the annotator number will only be either 1 or 2
-                        label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', dist, task, view)
-                        label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', dist, task, view)
                         image_path = os.path.join('.', 'data', 'images', participant, dist, task, view)
-                        label_1_dirs.append(label_1_path)
-                        label_2_dirs.append(label_2_path)
-                        image_dirs.append(image_path)
-        return image_dirs, label_1_dirs, label_2_dirs
+
+                        if dist=="replace_green_screen":
+                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', "ood", task, view)
+                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', "ood", task, view)
+                            gs_labels_1.append(label_1_path)
+                            gs_labels_2.append(label_2_path)
+                            gs_images.append(image_path)
+
+                        else: 
+                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', dist, task, view)
+                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', dist, task, view)
+
+                            label_1_dirs.append(label_1_path)
+                            label_2_dirs.append(label_2_path)
+                        
+                            image_dirs.append(image_path)
+        # if gs_labels is empty, set to none
+        if len(gs_labels_1)==0:
+            gs_labels_1, gs_labels_2, gs_images = None, None, None
+        return image_dirs, label_1_dirs, label_2_dirs, gs_images, (gs_labels_1, gs_labels_2)

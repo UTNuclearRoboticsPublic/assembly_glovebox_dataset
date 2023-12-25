@@ -11,7 +11,7 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 
 class AssemblyDataset(Dataset):
-    def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size):
+    def __init__(self, path_to_images, path_to_1_labels, path_to_2_labels, img_size, gs_images=None, gs_labels=None):
 
         self.transform = self.get_transform(img_size)
         self.path_to_images = path_to_images
@@ -24,6 +24,20 @@ class AssemblyDataset(Dataset):
         self.images = [os.path.join(path, file) for path in path_to_images for file in os.listdir(path) if file.endswith('.png')]
         self.masks_1 = [os.path.join(path, file) for path in path_to_1_labels for file in os.listdir(path)]
         self.masks_2 = [os.path.join(path, file) for path in path_to_2_labels for file in os.listdir(path)]
+
+        if gs_images and gs_labels:
+            labels1, labels2 = gs_labels
+            imgs = gs_images
+
+            matching_masks_1 = [os.path.join(path, file) for path in labels1 for file in os.listdir(path) if file.contains('J_NG_G') or file.contains('J_GL_G')]
+            matching_masks_2 = [os.path.join(path, file) for path in labels2 for file in os.listdir(path) if file.contains('J_NG_G') or file.contains('J_GL_G')]
+            images = [os.path.join(path, file) for path in imgs for file in os.listdir(path) if file.endswith('.png')]
+
+            self.masks_1.extend(matching_masks_1)
+            self.masks_2.extend(matching_masks_2)
+            self.images.extend(images)
+
+        
 
     def __len__(self) -> int:
         # don't worry about this
