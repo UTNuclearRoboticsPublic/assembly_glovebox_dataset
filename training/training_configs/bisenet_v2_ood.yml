@@ -78,6 +78,7 @@ data:
   test_query:
     participants:
       - Test_Subject_1
+      - Test_Subject_2
       - Test_Subject_3
       - Test_Subject_4
       - Test_Subject_6
@@ -96,4 +97,4 @@ data:
       - Side_View
   batch_size: 128
   img_size:  256
-ckpt_path: ./lightning_logs/version_79/checkpoints/epoch=3373-step=26992.ckpt
+ckpt_path: null

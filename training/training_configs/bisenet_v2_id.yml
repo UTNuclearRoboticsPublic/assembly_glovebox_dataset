@@ -88,4 +88,4 @@ data:
       - Side_View
   batch_size: 128
   img_size:  256
-ckpt_path: ./lightning_logs/version_79/checkpoints/epoch=3373-step=26992.ckpt
+ckpt_path: null
