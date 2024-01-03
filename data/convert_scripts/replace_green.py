@@ -81,22 +81,44 @@ class GreenRemover:
         indices = np.where(np.all(label_array!=0, axis = -1))
         coords = zip(indices[0], indices[1])
 
+
+
         left_pad, right_pad, upper_pad, lower_pad, new_w, new_h = self.get_padding(indices, label_array)
 
+        left_pad = math.ceil(left_pad)
+        right_pad = math.ceil(right_pad)
+        lower_pad = math.ceil(lower_pad)
+        upper_pad = math.ceil(upper_pad)
+
         random_url = random.choice(self.urls)
-        try:
-            response = requests.get(random_url)
-            random_img = Image.open(BytesIO(response.content))
+        # try:
+        #     response = requests.get(random_url)
+        #     random_img = Image.open(BytesIO(response.content))
             
-            self.urls.remove(random_url)
+        #     self.urls.remove(random_url)
 
-        except:
-            self.urls.remove(random_url)
+        # except:
+        #     self.urls.remove(random_url)
 
+        #     random_url = random.choice(self.urls)
+        #     response = requests.get(random_url)
+        #     random_img = Image.open(BytesIO(response.content))
+        #     self.urls.remove(random_url)
+
+        random_img = None
+        while random_img is None:
             random_url = random.choice(self.urls)
-            response = requests.get(random_url)
-            random_img = Image.open(BytesIO(response.content))
             self.urls.remove(random_url)
+
+            try:
+                response = requests.get(random_url)
+                random_img = Image.open(BytesIO(response.content))
+                break
+            except:
+                random_img = None
+
+        if random_img is None:
+            print("No valid image found.")
 
 
 
@@ -117,16 +139,26 @@ class GreenRemover:
 
         result.paste(new_img, (int(left_pad), int(upper_pad)))
 
+        print(f"the image is {raw_image} and the label is {raw_label}")
 
         return np.where((label_array != 0), np.array(result), img_array)
 
 
     def get_padding(self, indices, label_array):
-        upper_quartile_y = np.percentile(indices[0], 98) # not quartile, percent
-        lower_quartile_y = np.percentile(indices[0], 2)
+        try:
+            upper_quartile_y = np.percentile(indices[0], 98) # not quartile, percent
+            lower_quartile_y = np.percentile(indices[0], 2)
 
-        upper_quartile_x = np.percentile(indices[1], 98)
-        lower_quartile_x = np.percentile(indices[1], 2)
+            upper_quartile_x = np.percentile(indices[1], 98)
+            lower_quartile_x = np.percentile(indices[1], 2)
+        except:
+            print("ERROR WITH THE QUARTILESSSSSS")
+            upper_quartile_y = 55
+            lower_quartile_y = 25
+
+            upper_quartile_x = 55
+            lower_quartile_x = 25
+
 
         width = np.shape(label_array)[1]
         height = np.shape(label_array)[0]
@@ -216,8 +248,16 @@ class OrganizeScreens:
                     if label_annot_id == annotator:
                         matching_masks.append(label)
             
+            # TODO: this just saves the last one, so make it add all the similar ones together and save that
+            matching_labels = np.zeros((orig_height, orig_width))
             for label in matching_masks:
                 image = Image.open(f"{path_to_labels}/{label}")
+                matching_labels += np.asarray(image)
+
+            matching_labels[matching_labels!=0] = 255
+
+            image = Image.fromarray(matching_labels)
+            image = image.convert('L')
 
             os.makedirs(f"./temp/green_screen/Test_Subject_{participant_number}/{task}/{view}", exist_ok=True)
             image.save(f"./temp/green_screen/Test_Subject_{participant_number}/{task}/{view}/{image_name}")
@@ -250,12 +290,11 @@ if __name__ == '__main__':
     os.chdir('./data')
 
     'Edit the following to the project numbers that match before converting--'
+    participant_number = 1
     proj_num_to_type = {
-        "Top_View": 4,
-        "Side_View": 3
-    }
-    
-    participant_number = 6
+            "Top_View": 61,
+            "Side_View": 60
+        }
     # the organizer class is responsible for organizing the screens by parsing JSON files and converting labels
     organizer = OrganizeScreens(participant_number=participant_number)
 
@@ -272,13 +311,82 @@ if __name__ == '__main__':
     ## now overlaying images onto the green screen
     # the green remover class is responsible for removing the green screen from images and replacing it with random images from specified classes
     total_images = 20
-    classes = ["animals", "sports balls", "boxes", "books", "pencils"]
-    green_remover = GreenRemover(participant_number=6, total_images=total_images, classes = classes)
+
+    classes = ["airplane", "automobile", "bird", "cat", "deer", "dog", "horse", "ship", "carrots", "pencils"]
+    green_remover = GreenRemover(participant_number=participant_number, total_images=total_images, classes = classes)
     
-    green_remover.replace(participant_number=6)
+    green_remover.replace(participant_number=participant_number)
 
     dir_path = './temp'
 
     if os.path.exists(dir_path):
         # remove all contents of directory
         shutil.rmtree(dir_path)
+
+"""
+participant_number = 7
+proj_num_to_type = {
+        "Top_View": 6,
+        "Side_View": 5
+    }
+
+    
+participant_number = 4
+proj_num_to_type = {
+        "Top_View": 2,
+        "Side_View": 1
+    }
+
+
+participant_number = 6
+proj_num_to_type = {
+        "Top_View": 4,
+        "Side_View": 3
+    }
+
+participant_number = 9
+proj_num_to_type = {
+        "Top_View": 36,
+        "Side_View": 35
+    }
+
+
+participant_number = 10
+proj_num_to_type = {
+        "Top_View": 38,
+        "Side_View": 37
+    }
+
+
+participant_number = 12
+proj_num_to_type = {
+        "Top_View": 6,
+        "Side_View": 5
+    }
+
+participant_number = 11
+proj_num_to_type = {
+        "Top_View": 4,
+        "Side_View": 1
+    }
+
+    
+participant_number = 1
+proj_num_to_type = {
+        "Top_View": 61,
+        "Side_View": 60
+    }
+
+participant_number = 2
+proj_num_to_type = {
+        "Top_View": 59,
+        "Side_View": 58
+    }
+
+participant_number = 3
+proj_num_to_type = {
+        "Top_View": 57,
+        "Side_View": 56
+    }
+
+"""
