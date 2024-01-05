@@ -9,11 +9,52 @@ import lightning.pytorch as pl
 
 
 class EnsembleModel(LitModel):
-    def __init__(self, models):
+    def __init__(self, model_type, test_dropout=False):
         super().__init__()
-        self.models = models
+
+        #TODO: instead of using LitModel, use other one if not using UNET
+
+        if model_type == "unet":
+            path_1 = "./lightning_logs/version_73/checkpoints/epoch=1011-step=8096.ckpt"
+            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+            path_2 = "./lightning_logs/version_76/checkpoints/epoch=1856-step=29712.ckpt"
+            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+            path_3 = "./lightning_logs/version_78/checkpoints/epoch=3223-step=51584.ckpt"
+            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+        if model_type == "bisenetv2":
+            path_1="./lightning_logs/version_79/checkpoints/epoch=3373-step=26992.ckpt"
+            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+            
+            path_2="./lightning_logs/version_77/checkpoints/epoch=1083-step=8672.ckpt"
+            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+            path_3="./lightning_logs/version_72/checkpoints/epoch=1440-step=11528.ckpt"
+            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+        if model_type == "mobilesam":
+            
+            path_1="./lightning_logs/version_80/checkpoints/epoch=3027-step=24224.ckpt"
+            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            
+            path_2="./lightning_logs/version_75/checkpoints/epoch=1849-step=29600.ckpt"
+            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+            path_3="./lightning_logs/version_69/checkpoints/epoch=1312-step=10704.ckpt"
+            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
+
+
+        self.models = [model_1, model_2, model_3]
+
+
 
     def _common_set_(self, batch, batch_idx):
+
+        # TODO: checkwhy the IoU is almost 0
+
         x, y = batch
         #TODO: average time
         predictions = []
@@ -27,25 +68,35 @@ class EnsembleModel(LitModel):
 
 if __name__ == "__main__":
 
+    # TODO: make this a command line argument
+    model_type = "bisenetv2"
+    fast_dev_run = True
+    
+    # TODO: make this a command line argument
+    sets = ["ood", "id", "ood+gs", "gs"]
+    dropout = True
+    active_set = sets[0]
     # Step 1. Load all relevant models in the ensemble.
     # Be consistent, either chose the latest or best performing epoch. Don't combine like I think I did.
 
-    path_1 = "./lightning_logs/version_73/checkpoints/epoch=1011-step=8096.ckpt"
-    unet_model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'))
+    if model_type == "bisenetv2":
+        batch_size = 128
+    elif model_type == "unet":
+        batch_size = 64
+    elif model_type == "mobilesam":
+        batch_size = 64
+    else:
+        batch_size = 0
 
-    path_2 = "./lightning_logs/version_76/checkpoints/epoch=1856-step=29712.ckpt"
-    unet_model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'))
 
-    path_3 = "./lightning_logs/version_78/checkpoints/epoch=3223-step=51584.ckpt"
-    unet_model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'))
-
-    model = EnsembleModel(models = [unet_model_1, unet_model_2, unet_model_3])
+    model = EnsembleModel(model_type = model_type)
 
 
     data = {
         "fit_query": {
             "participants": [
                 "Test_Subject_1",
+                "Test_Subject_2",
                 "Test_Subject_3",
                 "Test_Subject_4",
                 "Test_Subject_6",
@@ -62,12 +113,14 @@ if __name__ == "__main__":
         "test_query": {
             "participants": [
                 "Test_Subject_1",
+                "Test_Subject_2",
                 "Test_Subject_3",
                 "Test_Subject_4",
                 "Test_Subject_6",
                 "Test_Subject_7",
                 "Test_Subject_9",
                 "Test_Subject_10",
+                "Test_Subject_11",
                 "Test_Subject_12"
             ],
             "distribution": ["id"],
@@ -79,13 +132,22 @@ if __name__ == "__main__":
     dm = AssemblyDataModule(
         test_query = data.get("test_query"),
         fit_query = data.get("fit_query"),
-        batch_size=64,
+        batch_size=batch_size,
         img_size=256
     )
 
-    # tensorboard = pl_loggers.TensorBoardLogger()
 
-    trainer = pl.Trainer(fast_dev_run=True)
+    if active_set=="ood":
+        data['test_query']['distribution'] = ["ood"]
+    if active_set=="id":
+        data['test_query']['distribution'] = ["id"]
+    if active_set=="gs":
+        data['test_query']['distribution'] = ["replaced_green_screen"]
+    if active_set=="ood+gs":
+        data['test_query']['distribution'] = ["ood", "replaced_green_screen"]
+
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir="./data/lightning_logs", name=f"{active_set}_{model_type}_dropout_{dropout}")
+
+    trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger)
 
     trainer.test(model, dm)
-
