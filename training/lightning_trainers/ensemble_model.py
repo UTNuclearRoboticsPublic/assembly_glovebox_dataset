@@ -3,6 +3,12 @@ import torch.nn.functional as F
 import torchmetrics
 
 from training.lightning_trainers.lightning_model import LitModel
+from training.lightning_trainers.mobilesam_model import MobileSamLitModel
+from training.lightning_trainers.bisenetv2_model import BiSeNetV2Model
+
+
+
+
 from lightning.pytorch import loggers as pl_loggers
 from training.dataloaders.datamodule import AssemblyDataModule
 import lightning.pytorch as pl
@@ -10,56 +16,56 @@ import lightning.pytorch as pl
 
 class EnsembleModel(LitModel):
     def __init__(self, model_type, test_dropout=False):
-        super().__init__()
+        super(EnsembleModel, self).__init__()
 
         #TODO: instead of using LitModel, use other one if not using UNET
 
         if model_type == "unet":
             path_1 = "./lightning_logs/version_73/checkpoints/epoch=1011-step=8096.ckpt"
-            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
             path_2 = "./lightning_logs/version_76/checkpoints/epoch=1856-step=29712.ckpt"
-            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
             path_3 = "./lightning_logs/version_78/checkpoints/epoch=3223-step=51584.ckpt"
-            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
         if model_type == "bisenetv2":
             path_1="./lightning_logs/version_79/checkpoints/epoch=3373-step=26992.ckpt"
-            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_1 = BiSeNetV2Model.load_from_checkpoint(path_1, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
             
             path_2="./lightning_logs/version_77/checkpoints/epoch=1083-step=8672.ckpt"
-            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_2 = BiSeNetV2Model.load_from_checkpoint(path_2, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
             path_3="./lightning_logs/version_72/checkpoints/epoch=1440-step=11528.ckpt"
-            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_3 = BiSeNetV2Model.load_from_checkpoint(path_3, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
         if model_type == "mobilesam":
             
             path_1="./lightning_logs/version_80/checkpoints/epoch=3027-step=24224.ckpt"
-            model_1 = LitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_1 = MobileSamLitModel.load_from_checkpoint(path_1, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
             
             path_2="./lightning_logs/version_75/checkpoints/epoch=1849-step=29600.ckpt"
-            model_2 = LitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda'), test_dropout=test_dropout)
+            model_2 = MobileSamLitModel.load_from_checkpoint(path_2, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
             path_3="./lightning_logs/version_69/checkpoints/epoch=1312-step=10704.ckpt"
-            model_3 = LitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda'), test_dropout=test_dropout)
-
+            model_3 = MobileSamLitModel.load_from_checkpoint(path_3, map_location=torch.device('cuda:0'), test_dropout=test_dropout)
 
         self.models = [model_1, model_2, model_3]
 
 
 
-    def _common_set_(self, batch, batch_idx):
+    def _common_set(self, batch, batch_idx):
 
         # TODO: checkwhy the IoU is almost 0
 
         x, y = batch
+        print("....inside the new common set")
         #TODO: average time
         predictions = []
         for model in self.models:
-            output = model(x)
+            output = model.model(x) # access the model in the method
             predictions.append(output)
         predictions = torch.stack(predictions, dim=-1)
         averaged_predictions = torch.mean(predictions, dim=-1)
@@ -69,13 +75,13 @@ class EnsembleModel(LitModel):
 if __name__ == "__main__":
 
     # TODO: make this a command line argument
-    model_type = "bisenetv2"
+    model_type = "unet"
     fast_dev_run = True
     
     # TODO: make this a command line argument
     sets = ["ood", "id", "ood+gs", "gs"]
-    dropout = True
-    active_set = sets[0]
+    dropout = False
+    active_set = sets[1]
     # Step 1. Load all relevant models in the ensemble.
     # Be consistent, either chose the latest or best performing epoch. Don't combine like I think I did.
 
@@ -148,6 +154,6 @@ if __name__ == "__main__":
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir="./data/lightning_logs", name=f"{active_set}_{model_type}_dropout_{dropout}")
 
-    trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger)
+    trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger, devices=1, accelerator="gpu")
 
     trainer.test(model, dm)
