@@ -75,7 +75,6 @@ class LitModel(pl.LightningModule):
         # add matplotlib figure - https://pytorch.org/docs/stable/tensorboard.html#torch.utils.tensorboard.writer.SummaryWriter.add_figure
 
         if self.test_dropout:
-            print("....we made it to dropout")
             self.model.train()
 
         x, y = batch
@@ -107,10 +106,21 @@ class LitModel(pl.LightningModule):
         return_ent = predictive_entropy(raw_preds)
 
         self.entropy_outputs.extend(return_ent)
+
+        # only for first batch
+        print(f"the batch index is {batch_idx}")
+        # doing for first batch
+        if batch_idx == 0:
+            self._make_grid(x, "test_images")
+            predictions = torch.argmax(raw_preds, dim=1)
+
+            # predictions only on 0, 1 (most likely because we need more epochs) -> check that dim is correct, though
+            self._make_grid(predictions, "test_preds")
+    def _set_time(self, time):
+        self.avg_pred_time = time
     
     def on_test_epoch_end(self):
         entropy_values = self.entropy_outputs
-        print(f".............the entropy values are {entropy_values}")
 
         fig = plt.figure(figsize =(10, 7))
         plt.boxplot(entropy_values)
@@ -160,9 +170,7 @@ class LitModel(pl.LightningModule):
 
         end_time = time.time()
         pred_time = end_time - start_time
-        print(f".....the pred time is {pred_time} and {x.shape}")
         self.avg_pred_time = pred_time / x.shape[0]
-        # print(f"shape of input x is {x.shape}")
         loss = self.get_loss(raw_preds, y)
         return loss, raw_preds
 
@@ -171,7 +179,7 @@ class LitModel(pl.LightningModule):
     def _make_grid(self, values, name):
         # grid = torchvision.utils.make_grid(values[0])
 
-        if name == "val_preds":
+        if name == "val_preds" or name=="test_preds":
             
             values = values.cpu().numpy()
 

@@ -13,6 +13,8 @@ from lightning.pytorch import loggers as pl_loggers
 from training.dataloaders.datamodule import AssemblyDataModule
 import lightning.pytorch as pl
 
+import time
+
 
 class EnsembleModel(LitModel):
     def __init__(self, model_type, test_dropout=False):
@@ -64,9 +66,21 @@ class EnsembleModel(LitModel):
         print("....inside the new common set")
         #TODO: average time
         predictions = []
+        times = []
         for model in self.models:
+            start_time = time.time()
             output = model.model(x) # access the model in the method
+
+             # because bisenet return multiple logits in train mode
+            if isinstance(output, tuple):
+                output = output[0]
+
+            end_time = time.time()
+            pred_time = end_time - start_time
+            times.append(pred_time / x.shape[0])
             predictions.append(output)
+        self.avg_pred_time = sum(times) / len(times)
+        super()._set_time(self.avg_pred_time)
         predictions = torch.stack(predictions, dim=-1)
         averaged_predictions = torch.mean(predictions, dim=-1)
         loss = self.get_loss(averaged_predictions, y)
@@ -75,13 +89,11 @@ class EnsembleModel(LitModel):
 if __name__ == "__main__":
 
     # TODO: make this a command line argument
-    model_type = "unet"
+    model_type = "bisenetv2"
     fast_dev_run = True
     
     # TODO: make this a command line argument
     sets = ["ood", "id", "ood+gs", "gs"]
-    dropout = False
-    active_set = sets[1]
     # Step 1. Load all relevant models in the ensemble.
     # Be consistent, either chose the latest or best performing epoch. Don't combine like I think I did.
 
@@ -142,18 +154,19 @@ if __name__ == "__main__":
         img_size=256
     )
 
+    for active_set in sets:
+        for dropout in [False, True]:
+            if active_set=="ood":
+                data['test_query']['distribution'] = ["ood"]
+            if active_set=="id":
+                data['test_query']['distribution'] = ["id"]
+            if active_set=="gs":
+                data['test_query']['distribution'] = ["replaced_green_screen"]
+            if active_set=="ood+gs":
+                data['test_query']['distribution'] = ["ood", "replaced_green_screen"]
 
-    if active_set=="ood":
-        data['test_query']['distribution'] = ["ood"]
-    if active_set=="id":
-        data['test_query']['distribution'] = ["id"]
-    if active_set=="gs":
-        data['test_query']['distribution'] = ["replaced_green_screen"]
-    if active_set=="ood+gs":
-        data['test_query']['distribution'] = ["ood", "replaced_green_screen"]
+            tb_logger = pl_loggers.TensorBoardLogger(save_dir="./data/lightning_logs", name=f"{active_set}_{model_type}_dropout_{dropout}")
 
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir="./data/lightning_logs", name=f"{active_set}_{model_type}_dropout_{dropout}")
+            trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger, devices=1, accelerator="gpu")
 
-    trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger, devices=1, accelerator="gpu")
-
-    trainer.test(model, dm)
+            trainer.test(model, dm)
