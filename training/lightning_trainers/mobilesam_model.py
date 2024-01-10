@@ -14,6 +14,7 @@ import PIL
 import cv2
 from mobile_sam import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 from mobile_sam.utils.transforms import ResizeLongestSide
+import time
 
 from ..metrics import *
 from ..dataloaders.datamodule import AssemblyDataModule
@@ -73,10 +74,7 @@ class MobileSamLitModel(LitModel):
         optimizer = torch.optim.AdamW(self.model.mask_decoder.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         return optimizer
     
-    def _common_set(self, batch, batch_idx):
-        """Run a forward pass and calculate training loss"""
-        x, y = batch
-
+    def _get_preds(self, x):
         with torch.no_grad():
             
             input_image, pixel_values = self.prepare_image(x, self.resize_transform)
@@ -96,6 +94,43 @@ class MobileSamLitModel(LitModel):
                             image_embedding=pixel_values,
                             multimask_output=True)
         
+        return raw_preds
+
+    
+    def _common_set(self, batch, batch_idx):
+        """Run a forward pass and calculate training loss"""
+        x, y = batch
+
+        start_time = time.perf_counter()
+
+        # with torch.no_grad():
+            
+        #     input_image, pixel_values = self.prepare_image(x, self.resize_transform)
+
+        #     input_boxes = torch.from_numpy(np.array([[0, 0, x.shape[2], x.shape[3]]])).float()
+        #     input_boxes = input_boxes.to(self.device)
+        #     rep_boxes = input_boxes.repeat(x.shape[0], 1, 1) # shape of each box -> 0, 0, 768, 768
+
+        #     sparse_embeddings, dense_embeddings = self.get_embeds(self.model, x, input_boxes = rep_boxes)
+
+        # raw_preds = self.get_prediction(
+        #                     model=self.model,
+        #                     input_image=input_image,
+        #                     original_image = x,
+        #                     sparse_embeddings=sparse_embeddings,
+        #                     dense_embeddings=dense_embeddings,
+        #                     image_embedding=pixel_values,
+        #                     multimask_output=True)
+
+        raw_preds = self._get_preds(x)
+        
+        end_time = time.perf_counter()
+        pred_time = end_time - start_time
+
+        self.avg_pred_time = pred_time / x.shape[0]
+
+        super()._set_time(self.avg_pred_time)
+
         loss = self.get_loss(raw_preds, y)
         # loss = F.cross_entropy(raw_preds, y.long())
 
@@ -148,7 +183,7 @@ class MobileSamLitModel(LitModel):
     def get_prediction(self, model, input_image, original_image, sparse_embeddings, dense_embeddings, image_embedding, multimask_output=False, return_logits=False):
         # Predice Masks
         low_res_masks, _ = model.mask_decoder(
-            image_embeddings=image_embedding.to("cuda"),
+            image_embeddings=image_embedding.to("cuda:2"),
             image_pe=model.prompt_encoder.get_dense_pe(),
             sparse_prompt_embeddings=sparse_embeddings,
             dense_prompt_embeddings=dense_embeddings,
@@ -159,7 +194,7 @@ class MobileSamLitModel(LitModel):
         # 1 -> low res masks from the mask decoder
         # 2 -> input size to the model, in (H, W)
         # 3-> original size of image before resizing for input to the model
-        masks = model.postprocess_masks(low_res_masks, input_image.shape[-2:], original_image.shape[-2:]).to("cuda")
+        masks = model.postprocess_masks(low_res_masks, input_image.shape[-2:], original_image.shape[-2:]).to("cuda:2")
 
         return masks
 

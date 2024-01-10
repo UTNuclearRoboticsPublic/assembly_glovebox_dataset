@@ -164,11 +164,11 @@ class LitModel(pl.LightningModule):
 
     def _common_set(self, batch, batch_idx):
         x, y = batch
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         raw_preds = self.model(x)
 
-        end_time = time.time()
+        end_time = time.perf_counter()
         pred_time = end_time - start_time
         self.avg_pred_time = pred_time / x.shape[0]
         loss = self.get_loss(raw_preds, y)
