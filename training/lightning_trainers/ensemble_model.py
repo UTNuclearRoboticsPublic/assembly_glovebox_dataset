@@ -97,20 +97,23 @@ class EnsembleModel(LitModel):
 if __name__ == "__main__":
 
     # TODO: make this a command line argument
-    model_type = "unet"
+    model_type = "mobilesam"
     fast_dev_run = False
     
     # TODO: make this a command line argument
-    sets = ["ood", "id", "gs", "ood+gs"]
+    sets = ["id", "ood", "gs", "ood+gs"]
     # Step 1. Load all relevant models in the ensemble.
     # Be consistent, either chose the latest or best performing epoch. Don't combine like I think I did.
 
     if model_type == "bisenetv2":
         batch_size = 128
+        gpu = 1
     elif model_type == "unet":
         batch_size = 64
+        gpu = 0
     elif model_type == "mobilesam":
         batch_size = 64
+        gpu = 2
     else:
         batch_size = 0
 
@@ -179,8 +182,8 @@ if __name__ == "__main__":
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
 
-            tb_logger = pl_loggers.TensorBoardLogger(save_dir="./lightning_logs", name=f"{active_set}_{model_type}_dropout_{dropout}")
+            tb_logger = pl_loggers.TensorBoardLogger(save_dir="./lightning_logs", name=f"NEW_{active_set}_{model_type}_dropout_{dropout}")
 
-            trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger, devices=[0], accelerator="gpu")
+            trainer = pl.Trainer(fast_dev_run=fast_dev_run, logger=tb_logger, devices=[gpu], accelerator="gpu")
 
             trainer.test(model, dm)
