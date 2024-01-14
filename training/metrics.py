@@ -19,20 +19,6 @@ def predictive_entropy(preds, mean=True):
     return_ent = pred_entropy
     return list(np.mean(return_ent, axis=1)) if mean else pred_entropy
 
-# def expected_calibration_error(preds, targets):
-
-#     np_preds = preds.cpu().numpy()
-#     num_bins = 15
-#     b = np.linspace(start=0, stop=1, num=num_bins)
-#     b = np.quantile(np_preds, b)
-#     b = np.unique(b)
-#     num_bins = len(b)
-
-#     # norm 'l1' coresponds with expected calibration error
-#     ece = CalibrationError(task='multiclass', num_classes=3, n_bins=num_bins, norm='l1')
-#     ace = ece(preds, targets.to(torch.int32))
-#     return ace
-
 # def adaptive_calibration_error(y_pred, y_true, num_bins=15):
 #     """
 #     Overall structure
@@ -127,7 +113,7 @@ def predictive_entropy(preds, mean=True):
 #     ace = num_sum / (2 * num_classes * num_ranges)
 #     return ace
 
-# def adaptive_calibration_error(y_pred, y_true, num_bins=15):
+# def adaptive_calibration_error_2(y_pred, y_true, num_bins=15):
 #     bs = 128
 #     num_classes = 3
 #     img_h = img_w = 256
