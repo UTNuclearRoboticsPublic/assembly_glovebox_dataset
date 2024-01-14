@@ -83,14 +83,17 @@ class LitModel(pl.LightningModule):
         # is this working properly? barely any metric data.
         loss, raw_preds = self._common_set(batch, batch_idx)
 
-        def get_avg_ace(raw_preds, y):
-            ace1 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[0])
-            ace2 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[1])
-            return (ace1+ace2) / 2
+        # def get_avg_ace(raw_preds, y):
+        #     ace1 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[0])
+        #     ace2 = adaptive_calibration_error(y_pred=raw_preds, y_true=y[1])
+        #     return (ace1+ace2) / 2
         
         def get_avg_ece(raw_preds, y):
             ece1 = torchmetrics.functional.calibration_error(preds=raw_preds, target=y[0].to(torch.int32), task="multiclass", num_classes=3)
             ece2 = torchmetrics.functional.calibration_error(preds=raw_preds, target=y[1].to(torch.int32), task="multiclass", num_classes=3)
+            # ece1 = expected_calibration_error(raw_preds, y[0])
+            # ece2 = expected_calibration_error(raw_preds, y[1])
+            print(f"ece1 is {ece1} and ece2 is {ece2}")
             return (ece1+ece2) / 2
         
         # because bisenet return multiple logits in train mode
@@ -106,10 +109,10 @@ class LitModel(pl.LightningModule):
             {
                 "test_loss": loss,
                 "test_iou": self.get_avg_iou(raw_preds, y),
-                "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
+                # "test_ace": get_avg_ace(raw_preds, y), # [4, 3, 161, 161] and [4, 161, 161] (two targets though)
                 "test_ece": get_avg_ece(raw_preds, y),
                 "avg_frame_reference_time": self.avg_pred_time,
-                "avg_entropy": np.mean(return_ent)
+                "avg_entropy": np.mean(return_ent) # this is a list
                 # "test_entropy": predictive_entropy(raw_preds)
             },
             prog_bar=True,
