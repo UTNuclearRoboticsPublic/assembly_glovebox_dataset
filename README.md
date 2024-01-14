@@ -57,6 +57,8 @@ Return Cohen's Kappa on the dataset by running `/data/covert_scripts/cohens_kapp
 Obtain tensorboard data in charts and tables using `tb_to_csv.ipynb`. Make sure the paths to the versions you want to use under `/lightning_logs` are updated correctly. The ones used for test results by the authors are updated. 
 
 After running the above, all images should be saved in `/data/images` and all labels in `/data/Labels`. These can also be done by just copying in the files from the uploaded dataset, skipping the video and Label Studio raw steps.
+- The images directory should have an id, ood, and replaced_green_screen folder for each participant
+- each participant in the Labels folder should have a By_1 and By_2 folder that each have a id and ood folder, respectively
 
 ## Other
 
