@@ -22,7 +22,7 @@ class AssemblyDataModule(pl.LightningDataModule):
             self.test_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels = path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size, gs_images=gs_images, gs_labels=(gs_labels_1, gs_labels_2))
 
         if stage=="fit":
-            path_to_imgs, path_to_1_labels, path_to_2_labels = self._get_files(self.fit_query)
+            path_to_imgs, path_to_1_labels, path_to_2_labels, _, _ = self._get_files(self.fit_query)
             train_set = AssemblyDataset(path_to_1_labels=path_to_1_labels, path_to_2_labels=path_to_2_labels, path_to_images=path_to_imgs, img_size=self.img_size)
 
             train_set_size = int(len(train_set)*0.89) # left with ~ 80/10/10 split (left one participant for the test set ID)
