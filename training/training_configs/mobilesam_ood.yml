@@ -18,7 +18,7 @@ trainer:
         save_top_k: 2
   accelerator: "gpu"
   strategy: 'ddp_find_unused_parameters_true'
-  devices: [0, 1, 2]
+  devices: [2]
   num_nodes: 1
   precision: 32-true
   logger: true

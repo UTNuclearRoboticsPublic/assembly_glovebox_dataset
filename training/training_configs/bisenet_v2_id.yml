@@ -11,7 +11,7 @@ trainer:
       init_args:
         monitor: "val_loss"
         mode: "min"
-        patience: 7
+        patience: 3
       class_path: ModelCheckpoint
       init_args:
         monitor: "val_iou"
@@ -19,7 +19,7 @@ trainer:
         save_top_k: 2
   accelerator: "gpu"
   strategy: auto
-  devices: [1, 2]
+  devices: [2]
   num_nodes: 1
   precision: 32-true
   logger: true
