@@ -127,9 +127,9 @@ class AssemblyDataset(Dataset):
 if __name__ == "__main__":
     # test the loader with the below
 
-    dataset = AssemblyDataset(path_to_1_labels=['./data/Labels/Test_Subject_1/By_1/id/J/Side_View'], 
-                              path_to_2_labels=['./data/Labels/Test_Subject_1/By_2/id/J/Side_View'],
-                              path_to_images=['./data/images/Test_Subject_1/id/J/Side_View'],
+    dataset = AssemblyDataset(path_to_1_labels=['./Dataset/Annotations/Test_Subject_1/By_1/id/Jenga_task/Side_View'], 
+                              path_to_2_labels=['./Dataset/Annotations/Test_Subject_1/By_2/id/Jenga_task/Side_View'],
+                              path_to_images=['./Dataset/Sampled_Frames/Test_Subject_1/id/Jenga_task/Side_View'],
                               img_size=161)
 
     dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)

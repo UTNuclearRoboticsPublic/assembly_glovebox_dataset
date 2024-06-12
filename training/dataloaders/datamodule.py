@@ -79,19 +79,19 @@ class AssemblyDataModule(pl.LightningDataModule):
                     for view in query.get("view"):
                         # TODO: create two paths -> one for first annotator, one for the second
                         # I added a part in the parser so that the annotator number will only be either 1 or 2
-                        image_path = os.path.join('.', 'data', 'images', participant, dist, task, view)
+                        image_path = os.path.join('.', 'Dataset', 'Sampled_Frames', participant, dist, task, view)
 
                         if dist=="replaced_green_screen":
-                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', "ood", task, view)
-                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', "ood", task, view)
+                            label_1_path = os.path.join('.', 'Dataset', 'Annotations', participant, 'By_1', "ood", task, view)
+                            label_2_path = os.path.join('.', 'Dataset', 'Annotations', participant, 'By_2', "ood", task, view)
                             gs_labels_1.append(label_1_path)
                             gs_labels_2.append(label_2_path)
                             gs_images.append(image_path)
 
                         else:
                             dist2 = "ood" if dist=="replaced_green_screen" else dist
-                            label_1_path = os.path.join('.', 'data', 'Labels', participant, 'By_1', dist2, task, view)
-                            label_2_path = os.path.join('.', 'data', 'Labels', participant, 'By_2', dist2, task, view)
+                            label_1_path = os.path.join('.', 'Dataset', 'Annotations', participant, 'By_1', dist2, task, view)
+                            label_2_path = os.path.join('.', 'Dataset', 'Annotations', participant, 'By_2', dist2, task, view)
 
                             label_1_dirs.append(label_1_path)
                             label_2_dirs.append(label_2_path)
