@@ -58,38 +58,40 @@ data:
   fit_query:
     participants:
       - Test_Subject_1
+      - Test_Subject_2
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_5
       - Test_Subject_6
       - Test_Subject_7
+      - Test_Subject_8
       - Test_Subject_9
       - Test_Subject_10
-      - Test_Subject_11
-      - Test_Subject_12
     distribution:
       - id
     task:
-      - J
-      - TB
+      - Jenga_task
+      - Toolbox_task
     view:
       - Top_View
       - Side_View
   test_query:
     participants:
       - Test_Subject_1
+      - Test_Subject_2
       - Test_Subject_3
       - Test_Subject_4
+      - Test_Subject_5
       - Test_Subject_6
       - Test_Subject_7
+      - Test_Subject_8
       - Test_Subject_9
       - Test_Subject_10
-      - Test_Subject_11
-      - Test_Subject_12
     distribution:
       - ood
     task:
-      - J
-      - TB
+      - Jenga_task
+      - Toolbox_task
     view:
       - Top_View
       - Side_View
