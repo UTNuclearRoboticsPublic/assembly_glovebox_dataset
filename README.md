@@ -22,8 +22,6 @@ This repository contains the code for our paper, and allows for the plug-and-pla
 
 To setup modules, run `pip install -e .`
 
-Create a python environment using the `requirements.txt` or `environment.yml`
-
 Download the dataset from the [Texas Data Repository](https://dataverse.tdl.org/dataset.xhtml?persistentId=doi:10.18738/T8/85R7KQ) such that the `Dataset` folder is on the same level as the `training` folder. 
 
 ## Training

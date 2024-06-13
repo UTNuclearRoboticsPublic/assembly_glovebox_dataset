@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="assembly_glovebox_dataset_loca",
+    license="BSD 3.0",
     version = "0.0.2",
     packages = ["dataloaders", "models", "lightning_trainers"],
     package_dir = {
