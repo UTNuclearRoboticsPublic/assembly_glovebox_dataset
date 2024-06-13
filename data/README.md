@@ -1,4 +1,4 @@
-Each subject's respective images, labels, and videos should be places here to follow the directory structure needed in the code.
+Each subject's respective images, labels, and videos can be placed here to follow the directory structure needed when using code in the folder. 
 
 From the folder of all the data, place the images and Labels folder into the directory. 
 

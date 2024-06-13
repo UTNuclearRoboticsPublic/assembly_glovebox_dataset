@@ -46,7 +46,7 @@ class GreenRemover:
         label_dir = f'./temp/green_screen/Test_Subject_{participant_number}'
         image_dir = f'./images/Test_Subject_{participant_number}/ood'
         
-        tasks = ["J", "TB"]
+        tasks = ["Jenga_task", "Toolbox_task"]
         views = ["Side_View", "Top_View"]
 
         for task in tasks:
