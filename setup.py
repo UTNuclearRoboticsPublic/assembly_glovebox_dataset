@@ -8,5 +8,23 @@ setup(
         "dataloaders": "./training/dataloaders",
         "models": "./training/models",
         "lightning_trainers": "./training/lightning_trainers"
-    }
+    },
+    install_requires=[
+        "albumentations",
+        "jsonargparse[signatures]>=4.27.7",
+        "lightning",
+        "matplotlib",
+        "mobile_sam @ git+https://github.com/ChaoningZhang/MobileSAM.git",
+        "numpy",
+        "netcal",
+        "opencv-python",
+        "pandas",
+        "pillow",
+        "timm",
+        "torch",
+        "torchmetrics",
+        "torchaudio",
+        "torchvision",
+        "transformers",
+    ],
 )
