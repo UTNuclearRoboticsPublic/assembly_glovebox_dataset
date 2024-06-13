@@ -2,6 +2,8 @@
 
 # The Collection of a Human Robot Collaboration Dataset for Cooperative Assembly in Glovebox Environments
 
+![Annotation Example](ex1.png)
+
 
 This repository contains the code for our paper, and allows for the plug-and-play training and testing of models using the HAGS dataset.
 
