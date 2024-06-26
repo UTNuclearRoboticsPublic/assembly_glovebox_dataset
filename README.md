@@ -56,3 +56,36 @@ To convert exported Label Studio projects and files to PNGs, run `ls_export_to_m
 To produce the dataset of replacing the green screen with images using the Label Studio raw project files, run `replace_green.py`. Note: you must edit [these lines](https://github.com/UTNuclearRobotics/assembly_glovebox_dataset/blob/45c52dcb4d2b49c24846c390b5d12e09007390e3/data/convert_scripts/replace_green.py#L293-L297) to match the Label Studio files (JSON and PNG export) in `/data/raw` to the participants and view type.
 
 After running the above, all images should be saved in `/data/images` and all labels in `/data/Labels`. These can also be done by just copying in the files from the uploaded dataset, skipping the video and Label Studio raw steps.
+
+
+## Transfer Learning Experiment Instructions
+
+In order to perform the following transfer learning experiment, we reduced our HAGS dataset to a binary classification problem of hands vs background classes. This was done to be consistent with the classes provided by the datasets from prior work. You can view the binary dataloader for the HAGS dataset here: ```training/dataloaders/dataloader_bin.py```
+
+### Collecting Outside Datasets
+At the same directory level as the HAGS Dataset folder, create a new folder, e.g., ```$ mkdir Other_Datasets```. Then download all of the following data to that folder location. 
+
+1. Download the Working Hands dataset by navigating to and then running ```$ python dataset_download_scripts/WORKINGHANDS_download_script.py```
+2. Download the Human Robot Collaboration dataset by navigating to the [HRC release page](https://github.com/OmidSaj/Uncertainty-Assisted-HRC/releases/tag/data_v2) and download the data_v2 package.
+3. Download the HaDr dataset by navigating to their [Kaggle page](https://www.kaggle.com/datasets/alevysock/hadr-dataset-for-hands-instance-segmentation) and download their dataset.
+
+The file structure should resemble
+```
+Other_Datasets
+├── HaDr                      
+│   ├── models                 
+│   ├── real_l515_640x480      
+│   ├── sim_train_320x256
+|   └── sim_val_320x256         
+├── HRC_DS                          
+│   ├── SRG_data_agent            
+│   ├── SRG_data_random                  
+|   ├── SRG_data_setup        
+│   ├── SRG_data_tool       
+│   └── ZL_dataset                
+└── WorkingHands   
+    ├── real_data
+    └── syn_dataset          
+```
+### How to Run the Experiment
+
