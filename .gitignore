@@ -4,6 +4,13 @@ data/Labels/
 data/raw/
 data/temp/
 data/videos/
+Dataset/
+Other_Datasets/
+*.egg-info/
+*/__pycache__/*
+*/*/__pycache__/*
+lightning_logs/
+chkpts/
 
 logs
 lighting_logs/
